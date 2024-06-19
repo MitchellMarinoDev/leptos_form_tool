@@ -1,5 +1,8 @@
 # leptos_form_tool
 
+[![crates.io](https://img.shields.io/crates/v/leptos_form_tool)](https://crates.io/crates/leptos_form_tool)
+[![docs.rs](https://docs.rs/leptos_form_tool/badge.svg)](https://docs.rs/leptos_form_tool)
+
 A declaritive way to create forms for [leptos](https://leptos.dev/).
 
 leptos_form_tool allows you to define forms in a declaritive way.

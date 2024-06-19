@@ -2,11 +2,17 @@
 name = "leptos_form_tool"
 version = "0.1.0"
 edition = "2021"
+authors = ["Mitchell Marino"]
+description = "A declaritive way to create fors for leptos."
+readme = "README.md"
+repository = "https://github.com/MitchellMarinoDev/leptos_form_tool.git"
+license = "MIT OR Apache-2.0"
+keywords = ["leptos", "web", "wasm", "html"]
+categories = ["web-programming"]
 
 [dependencies]
 leptos = "0.6"
 leptos_router = "0.6"
-serde = { version = "1.0.203", features = ["derive"] }
+serde = { version = "1.0", features = ["derive"] }
 # Leptos should pick the web_sys version for us
 web-sys = "*"
-
