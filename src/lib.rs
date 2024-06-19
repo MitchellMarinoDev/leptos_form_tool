@@ -2,7 +2,7 @@
 //! [leptos](https://leptos.dev/).
 //!
 //! To learn more, see the
-//! [README.md](https://github.com/MitchellMarinoDev/leptos_form_tool/src/branch/main/README.md)
+//! [README.md](https://github.com/MitchellMarinoDev/leptos_form_tool/blob/main/README.md)
 pub mod controls;
 mod form;
 mod form_builder;

@@ -220,7 +220,7 @@ impl FormStyle for GridFormStyle {
                         id=&value
                         name=&control.data.name
                         value=&value
-                        prop:checked=move || { &value_getter.get() == &value_clone }
+                        prop:checked=move || { value_getter.get() == value_clone }
                         on:input=move |ev| {
                             let new_value = event_target_checked(&ev);
                             if new_value {

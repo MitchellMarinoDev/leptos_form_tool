@@ -100,7 +100,8 @@ construct the ControlData for your custom type before adding it to the form.
 
 ## Getting Started
 
-To learn by example, see the example project.
+To learn by example, see the 
+[example project](https://github.com/MitchellMarinoDev/leptos_form_tool_example).
 
 To follow a Getting Started guide, see [`getting_started.md`].
 

@@ -67,7 +67,7 @@ pub trait FormStyle: 'static {
 
     /// Renders a button.
     ///
-    /// See [`BuuttonData`]
+    /// See [`ButtonData`]
     fn button<FD: FormToolData>(
         &self,
         control: Rc<ControlRenderData<Self, ButtonData<FD>>>,
