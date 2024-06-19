@@ -105,6 +105,12 @@ To learn by example, see the
 
 To follow a Getting Started guide, see [`getting_started.md`].
 
+## Compatability
+
+| form_tool version | leptos version |
+|-------------------|----------------|
+| 0.1.0             | 0.6            |
+
 ## Contributing
 
 To contribute, fork the repo and make a PR. 

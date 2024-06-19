@@ -14,5 +14,4 @@ categories = ["web-programming"]
 leptos = "0.6"
 leptos_router = "0.6"
 serde = { version = "1.0", features = ["derive"] }
-# Leptos should pick the web_sys version for us
-web-sys = "*"
+web-sys = "0.3"
