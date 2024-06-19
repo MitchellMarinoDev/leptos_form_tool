@@ -1,0 +1,12 @@
+[package]
+name = "leptos_form_tool"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+leptos = "0.6"
+leptos_router = "0.6"
+serde = { version = "1.0.203", features = ["derive"] }
+# Leptos should pick the web_sys version for us
+web-sys = "*"
+
