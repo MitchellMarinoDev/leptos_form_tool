@@ -2,6 +2,7 @@
 .form_grid {
 	display: grid;
 	grid-template-columns: repeat(6, minmax(0, 1fr));
+	color: rgb(8 15 33);
 	row-gap: 1.5rem;
 	column-gap: 1rem;
 }
@@ -14,35 +15,31 @@
 }
 
 .form_heading {
-	font-size: 1.875rem;
+	font-size: 1.75rem;
 	padding-top: 0.5rem;
 	padding-bottom: 0.5rem;
 	text-align: center;
 	font-weight: bold;
-	color: #374151;
-	border-bottom: 2px solid #374151;
-	margin-bottom: 2rem;
 	grid-column: span 12;
 	display: grid;
 }
 
 .form_group {
-	background-color: #0295f744;
+	background-color: rgba(107, 114, 128, 0.20);
 	border-radius: 25px;
   padding: 20px; 
 }
 
 .form_label {
 	font-family: ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Noto Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  text-align: left;
-  color: #4a5568;
-  font-size: 1rem;
-  font-weight: bold;
-  margin-left: 0.5rem;
-  margin-bottom: 0.25rem;
-  display: inline;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	text-align: left;
+	font-size: 1rem;
+	font-weight: bold;
+	margin-left: 0.5rem;
+	margin-bottom: 0.25rem;
+	display: inline;
 }
 
 .form_input {
@@ -53,7 +50,6 @@
 	border-width: 2px;
 	border-color: #e2e8f0;
 	border-style: solid;
-	color: #4a5568;
 	padding-top: 0.5rem;
 	padding-bottom: 0.5rem;
 	padding-left: 1rem;
@@ -80,7 +76,6 @@
 	display: block;
 	outline: none;
 	border: none;
-	/* width: 100%; */
 	border-radius: 1rem;
 	background-color: #0477d6;
 	color: #fff;
@@ -91,6 +86,24 @@
 	font-size: 1rem;
 	appearance: none;
 	min-height: 40px;
+}
+
+.form_checkbox {
+	display: block;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+	accent-color: rgb(14 165 233);
+	font-size: 1rem;
+	font-weight: bold;
+	padding: 0.5rem;
+	margin-left: 0.5rem;
+	margin-bottom: 0.25rem;
+}
+.form_checkbox_checked {
+	background-color: rgb(14 165 233);
+}
+.form_checkbox_unchecked {
+	background-color: rgb(107 114 128);
 }
 
 .form_submit {

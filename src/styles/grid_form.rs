@@ -319,23 +319,31 @@ impl FormStyle for GridFormStyle {
         value_getter: Signal<<CheckboxData as ControlData>::ReturnType>,
         value_setter: Rc<dyn Fn(<CheckboxData as ControlData>::ReturnType)>,
     ) -> View {
+        let label = control
+            .data
+            .label
+            .clone()
+            .unwrap_or(control.data.name.clone());
+
         let view = view! {
-            <label for=&control.data.name class="form_label">
-                {control.data.label.as_ref()}
-            </label>
-            <label class="form_input" for=&control.data.name>
+            <label
+                for=&control.data.name
+                class="form_checkbox"
+                class=("form_checkbox_checked", move || value_getter.get())
+                class=("form_checkbox_unchecked", move || !value_getter.get())
+            >
                 <input
                     type="checkbox"
                     id=&control.data.name
                     name=&control.data.name
+                    style="margin: auto 0;"
                     prop:checked=value_getter
                     on:input=move |ev| {
                         let new_value = event_target_checked(&ev);
                         value_setter(new_value);
                     }
                 />
-
-                <span>{control.data.label.as_ref()}</span>
+                <span style="margin: auto 0.5rem;">{label}</span>
             </label>
         }
         .into_view();
