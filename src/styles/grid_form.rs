@@ -128,7 +128,7 @@ impl FormStyle for GridFormStyle {
             <input
                 name=&control.data.name
                 prop:value=value_getter
-                style="visibility: hidden; column-span: none"
+                style="display: none; column-span: none"
             />
         }
         .into_view()
