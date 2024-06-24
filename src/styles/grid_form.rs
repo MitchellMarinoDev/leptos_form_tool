@@ -128,7 +128,7 @@ impl FormStyle for GridFormStyle {
             <input
                 name=&control.data.name
                 prop:value=value_getter
-                style="visibility: hidden; column-span: none"
+                style="visibility: hidden; position: absolute;"
             />
         }
         .into_view()
@@ -351,6 +351,8 @@ impl FormStyle for GridFormStyle {
         self.custom_component(&control.styles, view)
     }
 
+    // TODO: remove stepper, replace with a `.number()` function on the text
+    // field.
     fn stepper(
         &self,
         control: Rc<ControlRenderData<Self, StepperData>>,
