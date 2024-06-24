@@ -397,7 +397,6 @@ where
     FD: FormToolData,
     C: ControlData<ReturnType = String>,
     FDT: FromStr + ToString,
-    <FDT as FromStr>::Err: ToString,
 {
     /// Sets the parse functions to use the [`FromStr`] [`ToString`] and traits
     /// on on optional value for parsing and unparsing respectively.
@@ -444,7 +443,6 @@ where
     FD: FormToolData,
     C: ControlData<ReturnType = String>,
     FDT: FromStr + ToString + Default,
-    <FDT as FromStr>::Err: ToString,
 {
     /// Sets the parse functions to use the [`FromStr`] [`ToString`] and traits
     /// for parsing and unparsing respectively.
