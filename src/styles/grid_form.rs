@@ -156,7 +156,7 @@ impl FormStyle for GridFormStyle {
                 class="form_input"
                 class=("form_input_invalid", move || validation_state.get().is_err())
                 prop:value=move || value_getter.get()
-                on:focusout=move |ev| {
+                on:input=move |ev| {
                     value_setter(event_target_value(&ev));
                 }
             />
@@ -187,7 +187,7 @@ impl FormStyle for GridFormStyle {
                 prop:value=move || value_getter.get()
                 class="form_input"
                 class=("form_input_invalid", move || validation_state.get().is_err())
-                on:focusout=move |ev| {
+                on:input=move |ev| {
                     value_setter(event_target_value(&ev));
                 }
             ></textarea>
@@ -377,7 +377,7 @@ impl FormStyle for GridFormStyle {
                 class="form_input"
                 class=("form_input_invalid", move || validation_state.get().is_err())
                 prop:value=move || value_getter.get()
-                on:change=move |ev| {
+                on:input=move |ev| {
                     value_setter(event_target_value(&ev));
                 }
             />
