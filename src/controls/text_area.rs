@@ -1,5 +1,6 @@
 use super::{
-    BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, ValidatedControlData,
+    BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, UpdateEvent,
+    ValidatedControlData,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
 use leptos::{Signal, SignalSetter, View};
@@ -11,6 +12,7 @@ pub struct TextAreaData {
     pub name: String,
     pub label: Option<String>,
     pub placeholder: Option<String>,
+    pub update_event: UpdateEvent,
 }
 
 impl ControlData for TextAreaData {
@@ -67,6 +69,12 @@ impl<FD: FormToolData, FDT> ControlBuilder<FD, TextAreaData, FDT> {
     /// Sets the placeholder for the text area.
     pub fn placeholder(mut self, placeholder: impl ToString) -> Self {
         self.data.placeholder = Some(placeholder.to_string());
+        self
+    }
+
+    /// Sets the event that is used to update the form data.
+    pub fn update_on(mut self, event: UpdateEvent) -> Self {
+        self.data.update_event = event;
         self
     }
 }

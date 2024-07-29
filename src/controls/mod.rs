@@ -47,6 +47,15 @@ impl<FS, FD: 'static, F> RenderFn<FS, FD> for F where
 {
 }
 
+/// The possibilities for when a control updates the form data.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub enum UpdateEvent {
+    #[default]
+    OnFocusout,
+    OnInput,
+    OnChange,
+}
+
 /// A trait for the data needed to render an read-only control.
 pub trait VanityControlData: 'static {
     /// Builds the control, returning the [`View`] that was built.

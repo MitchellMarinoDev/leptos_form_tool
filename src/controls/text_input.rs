@@ -1,5 +1,6 @@
 use super::{
-    BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, ValidatedControlData,
+    BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, UpdateEvent,
+    ValidatedControlData,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
 use leptos::{Signal, SignalSetter, View};
@@ -12,6 +13,7 @@ pub struct TextInputData {
     pub label: Option<String>,
     pub placeholder: Option<String>,
     pub input_type: &'static str,
+    pub update_event: UpdateEvent,
 }
 
 impl Default for TextInputData {
@@ -21,6 +23,7 @@ impl Default for TextInputData {
             placeholder: None,
             label: None,
             input_type: "input",
+            update_event: UpdateEvent::default(),
         }
     }
 }
@@ -97,6 +100,12 @@ impl<FD: FormToolData, FDT> ControlBuilder<FD, TextInputData, FDT> {
     /// Sets the text input to be the specified type.
     pub fn input_type(mut self, input_type: &'static str) -> Self {
         self.data.input_type = input_type;
+        self
+    }
+
+    /// Sets the event that is used to update the form data.
+    pub fn update_on(mut self, event: UpdateEvent) -> Self {
+        self.data.update_event = event;
         self
     }
 }

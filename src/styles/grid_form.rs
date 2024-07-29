@@ -5,6 +5,7 @@ use crate::{
         output::OutputData, radio_buttons::RadioButtonsData, select::SelectData,
         slider::SliderData, spacer::SpacerData, stepper::StepperData, submit::SubmitData,
         text_area::TextAreaData, text_input::TextInputData, ControlData, ControlRenderData,
+        UpdateEvent,
     },
     FormToolData,
 };
@@ -152,13 +153,7 @@ impl FormStyle for GridFormStyle {
         value_setter: SignalSetter<<TextInputData as ControlData>::ReturnType>,
         validation_state: Signal<Result<(), String>>,
     ) -> View {
-        let view = view! {
-            <div>
-                <label for=&control.data.name class="form_label">
-                    {control.data.label.as_ref()}
-                </label>
-                <span class="form_error">{move || validation_state.get().err()}</span>
-            </div>
+        let input = view! {
             <input
                 type=control.data.input_type
                 id=&control.data.name
@@ -167,10 +162,29 @@ impl FormStyle for GridFormStyle {
                 class="form_input"
                 class=("form_input_invalid", move || validation_state.get().is_err())
                 prop:value=move || value_getter.get()
-                on:focusout=move |ev| {
-                    value_setter.set(event_target_value(&ev));
-                }
             />
+        };
+
+        let input = match control.data.update_event {
+            UpdateEvent::OnFocusout => input.on(ev::focusout, move |ev| {
+                value_setter.set(event_target_value(&ev));
+            }),
+            UpdateEvent::OnInput => input.on(ev::input, move |ev| {
+                value_setter.set(event_target_value(&ev));
+            }),
+            UpdateEvent::OnChange => input.on(ev::change, move |ev| {
+                value_setter.set(event_target_value(&ev));
+            }),
+        };
+
+        let view = view! {
+            <div>
+                <label for=&control.data.name class="form_label">
+                    {control.data.label.as_ref()}
+                </label>
+                <span class="form_error">{move || validation_state.get().err()}</span>
+            </div>
+            {input}
         }
         .into_view();
 
@@ -184,13 +198,7 @@ impl FormStyle for GridFormStyle {
         value_setter: SignalSetter<<TextAreaData as ControlData>::ReturnType>,
         validation_state: Signal<Result<(), String>>,
     ) -> View {
-        let view = view! {
-            <div>
-                <label for=&control.data.name class="form_label">
-                    {control.data.label.as_ref()}
-                </label>
-                <span class="form_error">{move || validation_state.get().err()}</span>
-            </div>
+        let input = view! {
             <textarea
                 id=&control.data.name
                 name=&control.data.name
@@ -199,10 +207,29 @@ impl FormStyle for GridFormStyle {
                 style="resize: vertical;"
                 class="form_input"
                 class=("form_input_invalid", move || validation_state.get().is_err())
-                on:focusout=move |ev| {
-                    value_setter.set(event_target_value(&ev));
-                }
             ></textarea>
+        };
+
+        let input = match control.data.update_event {
+            UpdateEvent::OnFocusout => input.on(ev::focusout, move |ev| {
+                value_setter.set(event_target_value(&ev));
+            }),
+            UpdateEvent::OnInput => input.on(ev::input, move |ev| {
+                value_setter.set(event_target_value(&ev));
+            }),
+            UpdateEvent::OnChange => input.on(ev::change, move |ev| {
+                value_setter.set(event_target_value(&ev));
+            }),
+        };
+
+        let view = view! {
+            <div>
+                <label for=&control.data.name class="form_label">
+                    {control.data.label.as_ref()}
+                </label>
+                <span class="form_error">{move || validation_state.get().err()}</span>
+            </div>
+            {input}
         }
         .into_view();
 
