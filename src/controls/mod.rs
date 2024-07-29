@@ -1,5 +1,5 @@
 use crate::{form::FormToolData, styles::FormStyle};
-use leptos::{RwSignal, Signal, View};
+use leptos::{RwSignal, Signal, SignalSetter, View};
 use std::{fmt::Display, rc::Rc, str::FromStr};
 
 pub mod button;
@@ -68,7 +68,7 @@ pub trait ControlData: 'static {
         fs: &FS,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
-        value_setter: Rc<dyn Fn(Self::ReturnType)>,
+        value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<Result<(), String>>,
     ) -> View;
 }

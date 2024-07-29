@@ -2,7 +2,7 @@ use super::{
     BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, ValidatedControlData,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{Signal, View};
+use leptos::{Signal, SignalSetter, View};
 use std::rc::Rc;
 
 /// Data used for the text area control.
@@ -20,7 +20,7 @@ impl ControlData for TextAreaData {
         fs: &FS,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
-        value_setter: Rc<dyn Fn(Self::ReturnType)>,
+        value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<Result<(), String>>,
     ) -> View {
         fs.text_area(control, value_getter, value_setter, validation_state)
