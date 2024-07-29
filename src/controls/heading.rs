@@ -3,9 +3,19 @@ use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
 use leptos::{MaybeSignal, Signal, View};
 use std::rc::Rc;
 
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Default)]
+pub enum HeadingLevel {
+    #[default]
+    H1,
+    H2,
+    H3,
+    H4,
+}
+
 /// Data used for the heading control.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct HeadingData {
+    pub level: HeadingLevel,
     pub title: MaybeSignal<String>,
 }
 
@@ -44,6 +54,30 @@ impl<FD: FormToolData> VanityControlBuilder<FD, HeadingData> {
     /// Sets the title of this heading to a signal.
     pub fn title_signal(mut self, title: Signal<String>) -> Self {
         self.data.title = MaybeSignal::Dynamic(title);
+        self
+    }
+
+    /// Sets this title to be a `h1`.
+    pub fn h1(mut self) -> Self {
+        self.data.level = HeadingLevel::H1;
+        self
+    }
+
+    /// Sets this title to be a `h2`.
+    pub fn h2(mut self) -> Self {
+        self.data.level = HeadingLevel::H2;
+        self
+    }
+
+    /// Sets this title to be a `h3`.
+    pub fn h3(mut self) -> Self {
+        self.data.level = HeadingLevel::H3;
+        self
+    }
+
+    /// Sets this title to be a `h4`.
+    pub fn h4(mut self) -> Self {
+        self.data.level = HeadingLevel::H4;
         self
     }
 }

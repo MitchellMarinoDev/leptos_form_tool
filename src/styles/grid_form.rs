@@ -73,10 +73,21 @@ impl FormStyle for GridFormStyle {
     }
 
     fn heading(&self, control: Rc<ControlRenderData<Self, HeadingData>>) -> View {
-        self.custom_component(
-            &control.styles,
-            view! { <h2 class="form_heading">{control.data.title.clone()}</h2> }.into_view(),
-        )
+        use crate::controls::heading::HeadingLevel::*;
+
+        let view =
+            match control.data.level {
+                H1 => view! { <h1 class="form_heading"> {control.data.title.clone()} </h1> }
+                    .into_view(),
+                H2 => view! { <h2 class="form_heading"> {control.data.title.clone()} </h2> }
+                    .into_view(),
+                H3 => view! { <h3 class="form_heading"> {control.data.title.clone()} </h3> }
+                    .into_view(),
+                H4 => view! { <h4 class="form_heading"> {control.data.title.clone()} </h4> }
+                    .into_view(),
+            };
+
+        self.custom_component(&control.styles, view)
     }
 
     fn submit(&self, control: Rc<ControlRenderData<Self, SubmitData>>) -> View {
