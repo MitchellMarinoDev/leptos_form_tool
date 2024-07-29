@@ -1,8 +1,9 @@
 use super::{
-    BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, ValidatedControlData,
+    BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, UpdateEvent,
+    ValidatedControlData,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{Signal, View};
+use leptos::{Signal, SignalSetter, View};
 use std::rc::Rc;
 
 /// Data used for the text area control.
@@ -11,6 +12,7 @@ pub struct TextAreaData {
     pub name: String,
     pub label: Option<String>,
     pub placeholder: Option<String>,
+    pub update_event: UpdateEvent,
 }
 
 impl ControlData for TextAreaData {
@@ -20,7 +22,7 @@ impl ControlData for TextAreaData {
         fs: &FS,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
-        value_setter: Rc<dyn Fn(Self::ReturnType)>,
+        value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<Result<(), String>>,
     ) -> View {
         fs.text_area(control, value_getter, value_setter, validation_state)
@@ -67,6 +69,12 @@ impl<FD: FormToolData, FDT> ControlBuilder<FD, TextAreaData, FDT> {
     /// Sets the placeholder for the text area.
     pub fn placeholder(mut self, placeholder: impl ToString) -> Self {
         self.data.placeholder = Some(placeholder.to_string());
+        self
+    }
+
+    /// Sets the event that is used to update the form data.
+    pub fn update_on(mut self, event: UpdateEvent) -> Self {
+        self.data.update_event = event;
         self
     }
 }

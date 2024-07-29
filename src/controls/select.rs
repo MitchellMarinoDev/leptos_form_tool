@@ -2,7 +2,7 @@ use super::{
     BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, ValidatedControlData,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{IntoSignal, MaybeSignal, Signal, SignalGet, View};
+use leptos::{IntoSignal, MaybeSignal, Signal, SignalGet, SignalSetter, View};
 use std::rc::Rc;
 
 /// Data used for the select control.
@@ -25,7 +25,7 @@ impl ControlData for SelectData {
         fs: &FS,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
-        value_setter: Rc<dyn Fn(Self::ReturnType)>,
+        value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<Result<(), String>>,
     ) -> View {
         fs.select(control, value_getter, value_setter, validation_state)

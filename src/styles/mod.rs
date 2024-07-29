@@ -9,7 +9,7 @@ use crate::{
     },
     FormToolData,
 };
-use leptos::{RwSignal, Signal, View};
+use leptos::{RwSignal, Signal, SignalSetter, View};
 use std::rc::Rc;
 
 pub use grid_form::{GFStyleAttr, GridFormStyle};
@@ -58,12 +58,20 @@ pub trait FormStyle: 'static {
     fn spacer(&self, control: Rc<ControlRenderData<Self, SpacerData>>) -> View;
 
     /// Renders a heading for a section of the form.
-    fn heading(&self, control: Rc<ControlRenderData<Self, HeadingData>>) -> View;
+    fn heading(
+        &self,
+        control: Rc<ControlRenderData<Self, HeadingData>>,
+        value_getter: Option<Signal<String>>,
+    ) -> View;
 
     /// Renders a submit button.
     ///
     /// See [`SubmitData`].
-    fn submit(&self, control: Rc<ControlRenderData<Self, SubmitData>>) -> View;
+    fn submit(
+        &self,
+        control: Rc<ControlRenderData<Self, SubmitData>>,
+        value_getter: Option<Signal<String>>,
+    ) -> View;
 
     /// Renders a button.
     ///
@@ -72,6 +80,7 @@ pub trait FormStyle: 'static {
         &self,
         control: Rc<ControlRenderData<Self, ButtonData<FD>>>,
         data_signal: RwSignal<FD>,
+        value_getter: Option<Signal<String>>,
     ) -> View;
 
     /// Renders some output text.
@@ -99,7 +108,7 @@ pub trait FormStyle: 'static {
         &self,
         control: Rc<ControlRenderData<Self, TextInputData>>,
         value_getter: Signal<<TextInputData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<TextInputData as ControlData>::ReturnType)>,
+        value_setter: SignalSetter<<TextInputData as ControlData>::ReturnType>,
         validation_state: Signal<Result<(), String>>,
     ) -> View;
 
@@ -110,7 +119,7 @@ pub trait FormStyle: 'static {
         &self,
         control: Rc<ControlRenderData<Self, TextAreaData>>,
         value_getter: Signal<<TextAreaData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<TextAreaData as ControlData>::ReturnType)>,
+        value_setter: SignalSetter<<TextAreaData as ControlData>::ReturnType>,
         validation_state: Signal<Result<(), String>>,
     ) -> View;
 
@@ -121,7 +130,7 @@ pub trait FormStyle: 'static {
         &self,
         control: Rc<ControlRenderData<Self, RadioButtonsData>>,
         value_getter: Signal<<RadioButtonsData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<RadioButtonsData as ControlData>::ReturnType)>,
+        value_setter: SignalSetter<<RadioButtonsData as ControlData>::ReturnType>,
         validation_state: Signal<Result<(), String>>,
     ) -> View;
 
@@ -132,7 +141,7 @@ pub trait FormStyle: 'static {
         &self,
         control: Rc<ControlRenderData<Self, SelectData>>,
         value_getter: Signal<<SelectData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<SelectData as ControlData>::ReturnType)>,
+        value_setter: SignalSetter<<SelectData as ControlData>::ReturnType>,
         validation_state: Signal<Result<(), String>>,
     ) -> View;
 
@@ -143,7 +152,7 @@ pub trait FormStyle: 'static {
         &self,
         control: Rc<ControlRenderData<Self, CheckboxData>>,
         value_getter: Signal<<CheckboxData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<CheckboxData as ControlData>::ReturnType)>,
+        value_setter: SignalSetter<<CheckboxData as ControlData>::ReturnType>,
     ) -> View;
 
     /// Renders a stepper control.
@@ -153,7 +162,7 @@ pub trait FormStyle: 'static {
         &self,
         control: Rc<ControlRenderData<Self, StepperData>>,
         value_getter: Signal<<StepperData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<StepperData as ControlData>::ReturnType)>,
+        value_setter: SignalSetter<<StepperData as ControlData>::ReturnType>,
         validation_state: Signal<Result<(), String>>,
     ) -> View;
 
@@ -164,7 +173,7 @@ pub trait FormStyle: 'static {
         &self,
         control: Rc<ControlRenderData<Self, SliderData>>,
         value_getter: Signal<<SliderData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<SliderData as ControlData>::ReturnType)>,
+        value_setter: SignalSetter<<SliderData as ControlData>::ReturnType>,
         validation_state: Signal<Result<(), String>>,
     ) -> View;
 }

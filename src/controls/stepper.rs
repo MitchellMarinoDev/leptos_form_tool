@@ -2,7 +2,7 @@ use super::{
     BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, ValidatedControlData,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{MaybeSignal, Signal, View};
+use leptos::{MaybeSignal, Signal, SignalSetter, View};
 use std::rc::Rc;
 
 /// Data used for the stepper control.
@@ -22,7 +22,7 @@ impl ControlData for StepperData {
         fs: &FS,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
-        value_setter: Rc<dyn Fn(Self::ReturnType)>,
+        value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<Result<(), String>>,
     ) -> View {
         fs.stepper(control, value_getter, value_setter, validation_state)

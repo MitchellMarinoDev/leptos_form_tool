@@ -278,7 +278,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
         parse_fn: Box<dyn ParseFn<CRT, FDT>>,
         setter: Rc<dyn FieldSetter<FD, FDT>>,
         fd: RwSignal<FD>,
-    ) -> Rc<dyn Fn(CRT) + 'static> {
+    ) -> SignalSetter<CRT> {
         let value_setter = move |value| {
             let parsed = match parse_fn(value) {
                 Ok(p) => {
@@ -299,7 +299,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
             // run validation
             (validation_cb)();
         };
-        Rc::new(value_setter)
+        value_setter.into_signal_setter()
     }
 
     /// Builds the direct send version of the form.
@@ -443,6 +443,29 @@ impl<FD: FormToolData> FormBuilder<FD> {
                 {elements}
             </Form>
         };
+
+        Form {
+            fd,
+            validations: self.validations,
+            view,
+        }
+    }
+
+    /// builds just the controls of the form.
+    pub(crate) fn build_form_controls(self, fd: FD, fs: FD::Style) -> Form<FD> {
+        let fd = create_rw_signal(fd);
+        let fs = Rc::new(fs);
+
+        let (views, _validation_cbs): (Vec<_>, Vec<_>) = self
+            .render_fns
+            .into_iter()
+            .map(|r_fn| r_fn(fs.clone(), fd))
+            .unzip();
+
+        let view = fs.form_frame(ControlRenderData {
+            data: views.into_view(),
+            styles: self.styles,
+        });
 
         Form {
             fd,
