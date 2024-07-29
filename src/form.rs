@@ -120,6 +120,7 @@ pub trait FormToolData: Clone + 'static {
     /// For the other ways to construct a [`Form`], see:
     /// - [`get_action_form`](Self::get_action_form)
     /// - [`get_plain_form`](Self::get_plain_form)
+    /// - [`get_form_controls`](Self::get_form_controls)
     fn get_form<ServFn>(
         self,
         action: Action<ServFn, Result<ServFn::Output, ServerFnError<ServFn::Error>>>,
@@ -145,7 +146,8 @@ pub trait FormToolData: Clone + 'static {
     ///
     /// For the other ways to construct a [`Form`], see:
     /// - [`get_form`](Self::get_form)
-    /// - [`get_action_form`](Self::get_action_form)
+    /// - [`get_plain_form`](Self::get_plain_form)
+    /// - [`get_form_controls`](Self::get_form_controls)
     fn get_action_form<ServFn>(
         self,
         action: Action<ServFn, Result<ServFn::Output, ServerFnError<ServFn::Error>>>,
@@ -171,6 +173,7 @@ pub trait FormToolData: Clone + 'static {
     /// For the other ways to construct a [`Form`], see:
     /// - [`get_form`](Self::get_form)
     /// - [`get_action_form`](Self::get_action_form)
+    /// - [`get_form_controls`](Self::get_form_controls)
     fn get_plain_form(
         self,
         action: impl ToString,
@@ -180,6 +183,22 @@ pub trait FormToolData: Clone + 'static {
         let builder = FormBuilder::new(context);
         let builder = Self::build_form(builder);
         builder.build_plain_form(action.to_string(), self, style)
+    }
+
+    /// Constructs a [`Form`] for this [`FormToolData`] type.
+    ///
+    /// This renders the form without wrapping it in any form html elements.
+    /// This can be useful if you want to do that yourself, or if you are
+    /// just using the FormData signal for some non-form purpose.
+    ///
+    /// For the other ways to construct a [`Form`], see:
+    /// - [`get_form`](Self::get_form)
+    /// - [`get_action_form`](Self::get_action_form)
+    /// - [`get_plain_form`](Self::get_plain_form)
+    fn get_form_controls(self, style: Self::Style, context: Self::Context) -> Form<Self> {
+        let builder = FormBuilder::new(context);
+        let builder = Self::build_form(builder);
+        builder.build_form_controls(self, style)
     }
 
     /// Gets a [`FormValidator`] for this [`FormToolData`].
