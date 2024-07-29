@@ -1,4 +1,7 @@
-use super::{BuilderCxFn, BuilderFn, ControlRenderData, VanityControlBuilder, VanityControlData};
+use super::{
+    BuilderCxFn, BuilderFn, ControlRenderData, GetterVanityControlData, VanityControlBuilder,
+    VanityControlData,
+};
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
 use leptos::{prelude::Signal, View};
 use std::rc::Rc;
@@ -13,11 +16,12 @@ impl VanityControlData for SubmitData {
     fn build_control<FS: FormStyle>(
         fs: &FS,
         control: Rc<ControlRenderData<FS, Self>>,
-        _value_getter: Option<Signal<String>>,
+        value_getter: Option<Signal<String>>,
     ) -> View {
-        fs.submit(control)
+        fs.submit(control, value_getter)
     }
 }
+impl GetterVanityControlData for SubmitData {}
 
 impl<FD: FormToolData> FormBuilder<FD> {
     /// Builds a submit button and adds it to the form.
@@ -38,7 +42,8 @@ impl<FD: FormToolData> FormBuilder<FD> {
 impl<FD: FormToolData> VanityControlBuilder<FD, SubmitData> {
     /// Sets the submit button's text.
     pub fn text(mut self, text: impl ToString) -> Self {
-        self.data.text = text.to_string();
+        let text = text.to_string();
+        self.getter = Some(Rc::new(move |_| text.clone()));
         self
     }
 }

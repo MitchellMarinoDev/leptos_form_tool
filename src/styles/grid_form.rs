@@ -73,29 +73,35 @@ impl FormStyle for GridFormStyle {
         )
     }
 
-    fn heading(&self, control: Rc<ControlRenderData<Self, HeadingData>>) -> View {
+    fn heading(
+        &self,
+        control: Rc<ControlRenderData<Self, HeadingData>>,
+        value_getter: Option<Signal<String>>,
+    ) -> View {
         use crate::controls::heading::HeadingLevel::*;
 
-        let view =
-            match control.data.level {
-                H1 => view! { <h1 class="form_heading"> {control.data.title.clone()} </h1> }
-                    .into_view(),
-                H2 => view! { <h2 class="form_heading"> {control.data.title.clone()} </h2> }
-                    .into_view(),
-                H3 => view! { <h3 class="form_heading"> {control.data.title.clone()} </h3> }
-                    .into_view(),
-                H4 => view! { <h4 class="form_heading"> {control.data.title.clone()} </h4> }
-                    .into_view(),
-            };
+        let title = move || value_getter.map(|v| v.get()).unwrap_or_default();
+
+        let view = match control.data.level {
+            H1 => view! { <h1 class="form_heading"> {title} </h1> }.into_view(),
+            H2 => view! { <h2 class="form_heading"> {title} </h2> }.into_view(),
+            H3 => view! { <h3 class="form_heading"> {title} </h3> }.into_view(),
+            H4 => view! { <h4 class="form_heading"> {title} </h4> }.into_view(),
+        };
 
         self.custom_component(&control.styles, view)
     }
 
-    fn submit(&self, control: Rc<ControlRenderData<Self, SubmitData>>) -> View {
+    fn submit(
+        &self,
+        control: Rc<ControlRenderData<Self, SubmitData>>,
+        value_getter: Option<Signal<String>>,
+    ) -> View {
+        let title = move || value_getter.map(|v| v.get()).unwrap_or_default();
+
         self.custom_component(
             &control.styles,
-            view! { <input type="submit" value=&control.data.text class="form_submit"/> }
-                .into_view(),
+            view! { <input type="submit" value=title class="form_submit"/> }.into_view(),
         )
     }
 
@@ -103,6 +109,7 @@ impl FormStyle for GridFormStyle {
         &self,
         control: Rc<ControlRenderData<Self, ButtonData<FD>>>,
         data_signal: RwSignal<FD>,
+        value_getter: Option<Signal<String>>,
     ) -> View {
         let action = control.data.action.clone();
         let on_click = move |ev: MouseEvent| {
@@ -111,9 +118,11 @@ impl FormStyle for GridFormStyle {
             }
         };
 
+        let title = move || value_getter.map(|v| v.get()).unwrap_or_default();
+
         let view = view! {
             <button type="button" class="form_button" on:click=on_click>
-                {&control.data.text}
+                {title}
             </button>
         }
         .into_view();
@@ -416,7 +425,7 @@ impl FormStyle for GridFormStyle {
                 class="form_input"
                 class=("form_input_invalid", move || validation_state.get().is_err())
                 prop:value=move || value_getter.get()
-                on:focusout=move |ev| {
+                on:input=move |ev| {
                     value_setter.set(event_target_value(&ev));
                 }
             />

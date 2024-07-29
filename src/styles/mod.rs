@@ -58,12 +58,20 @@ pub trait FormStyle: 'static {
     fn spacer(&self, control: Rc<ControlRenderData<Self, SpacerData>>) -> View;
 
     /// Renders a heading for a section of the form.
-    fn heading(&self, control: Rc<ControlRenderData<Self, HeadingData>>) -> View;
+    fn heading(
+        &self,
+        control: Rc<ControlRenderData<Self, HeadingData>>,
+        value_getter: Option<Signal<String>>,
+    ) -> View;
 
     /// Renders a submit button.
     ///
     /// See [`SubmitData`].
-    fn submit(&self, control: Rc<ControlRenderData<Self, SubmitData>>) -> View;
+    fn submit(
+        &self,
+        control: Rc<ControlRenderData<Self, SubmitData>>,
+        value_getter: Option<Signal<String>>,
+    ) -> View;
 
     /// Renders a button.
     ///
@@ -72,6 +80,7 @@ pub trait FormStyle: 'static {
         &self,
         control: Rc<ControlRenderData<Self, ButtonData<FD>>>,
         data_signal: RwSignal<FD>,
+        value_getter: Option<Signal<String>>,
     ) -> View;
 
     /// Renders some output text.

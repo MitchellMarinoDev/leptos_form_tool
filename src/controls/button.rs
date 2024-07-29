@@ -1,9 +1,7 @@
+use super::FieldGetter;
 use super::{BuilderCxFn, BuilderFn, ControlRenderData, ShowWhenFn};
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::view;
-use leptos::RwSignal;
-use leptos::Show;
-use leptos::Signal;
+use leptos::{view, IntoSignal, RwSignal, Show, Signal, SignalGet};
 use std::rc::Rc;
 use web_sys::MouseEvent;
 
@@ -11,21 +9,16 @@ type ButtonAction<FD> = dyn Fn(MouseEvent, RwSignal<FD>) + 'static;
 
 /// Data used for the button control.
 pub struct ButtonData<FD: FormToolData> {
-    pub text: String,
     pub action: Option<Rc<ButtonAction<FD>>>,
 }
 impl<FD: FormToolData> Default for ButtonData<FD> {
     fn default() -> Self {
-        ButtonData {
-            text: String::default(),
-            action: None,
-        }
+        ButtonData { action: None }
     }
 }
 impl<FD: FormToolData> Clone for ButtonData<FD> {
     fn clone(&self) -> Self {
         ButtonData {
-            text: self.text.clone(),
             action: self.action.clone(),
         }
     }
@@ -57,8 +50,12 @@ impl<FD: FormToolData> FormBuilder<FD> {
         let cx = self.cx.clone();
         let render_fn = move |fs: Rc<FD::Style>, fd: RwSignal<FD>| {
             let render_data = Rc::new(render_data);
+            let value_getter = control.getter.map(|getter| {
+                let value_getter = move || getter(fd.get());
+                value_getter.into_signal()
+            });
 
-            let view = move || fs.clone().button(render_data.clone(), fd);
+            let view = move || fs.clone().button(render_data.clone(), fd, value_getter);
             let view = match show_when {
                 Some(when) => {
                     let when = move || when(fd.into(), cx.clone());
@@ -78,6 +75,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
 pub struct ButtonBuilder<FD: FormToolData> {
     pub(crate) styles: Vec<<FD::Style as FormStyle>::StylingAttributes>,
     pub(crate) data: ButtonData<FD>,
+    pub(crate) getter: Option<Rc<dyn FieldGetter<FD, String>>>,
     pub(crate) show_when: Option<Box<dyn ShowWhenFn<FD, FD::Context>>>,
 }
 
@@ -87,6 +85,7 @@ impl<FD: FormToolData> ButtonBuilder<FD> {
         ButtonBuilder {
             styles: Vec::default(),
             data: ButtonData::default(),
+            getter: None,
             show_when: None,
         }
     }
@@ -108,7 +107,14 @@ impl<FD: FormToolData> ButtonBuilder<FD> {
 
     /// Sets the text of the button.
     pub fn text(mut self, text: impl ToString) -> Self {
-        self.data.text = text.to_string();
+        let text = text.to_string();
+        self.getter = Some(Rc::new(move |_| text.clone()));
+        self
+    }
+
+    /// A getter for the button text.
+    pub fn dynamic_text(mut self, getter: impl FieldGetter<FD, String>) -> Self {
+        self.getter = Some(Rc::new(getter));
         self
     }
 

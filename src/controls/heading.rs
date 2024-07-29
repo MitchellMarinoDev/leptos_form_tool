@@ -1,6 +1,9 @@
-use super::{BuilderCxFn, BuilderFn, ControlRenderData, VanityControlBuilder, VanityControlData};
+use super::{
+    BuilderCxFn, BuilderFn, ControlRenderData, GetterVanityControlData, VanityControlBuilder,
+    VanityControlData,
+};
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{MaybeSignal, Signal, View};
+use leptos::{prelude::Signal, View};
 use std::rc::Rc;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Default)]
@@ -16,18 +19,18 @@ pub enum HeadingLevel {
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct HeadingData {
     pub level: HeadingLevel,
-    pub title: MaybeSignal<String>,
 }
 
 impl VanityControlData for HeadingData {
     fn build_control<FS: FormStyle>(
         fs: &FS,
         control: Rc<ControlRenderData<FS, Self>>,
-        _value_getter: Option<leptos::prelude::Signal<String>>,
+        value_getter: Option<Signal<String>>,
     ) -> View {
-        fs.heading(control)
+        fs.heading(control, value_getter)
     }
 }
+impl GetterVanityControlData for HeadingData {}
 
 impl<FD: FormToolData> FormBuilder<FD> {
     /// Builds a heading and adds it to the form.
@@ -47,13 +50,8 @@ impl<FD: FormToolData> FormBuilder<FD> {
 impl<FD: FormToolData> VanityControlBuilder<FD, HeadingData> {
     /// Sets the title of this heading.
     pub fn title(mut self, title: impl ToString) -> Self {
-        self.data.title = MaybeSignal::Static(title.to_string());
-        self
-    }
-
-    /// Sets the title of this heading to a signal.
-    pub fn title_signal(mut self, title: Signal<String>) -> Self {
-        self.data.title = MaybeSignal::Dynamic(title);
+        let title = title.to_string();
+        self.getter = Some(Rc::new(move |_| title.clone()));
         self
     }
 
