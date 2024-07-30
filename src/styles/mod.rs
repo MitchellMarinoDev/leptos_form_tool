@@ -6,6 +6,7 @@ use crate::{
         output::OutputData, radio_buttons::RadioButtonsData, select::SelectData,
         slider::SliderData, spacer::SpacerData, stepper::StepperData, submit::SubmitData,
         text_area::TextAreaData, text_input::TextInputData, ControlData, ControlRenderData,
+        ValidationState,
     },
     FormToolData,
 };
@@ -109,7 +110,7 @@ pub trait FormStyle: 'static {
         control: Rc<ControlRenderData<Self, TextInputData>>,
         value_getter: Signal<<TextInputData as ControlData>::ReturnType>,
         value_setter: SignalSetter<<TextInputData as ControlData>::ReturnType>,
-        validation_state: Signal<Result<(), String>>,
+        validation_state: Signal<ValidationState>,
     ) -> View;
 
     /// Renders a text area control.
@@ -120,7 +121,7 @@ pub trait FormStyle: 'static {
         control: Rc<ControlRenderData<Self, TextAreaData>>,
         value_getter: Signal<<TextAreaData as ControlData>::ReturnType>,
         value_setter: SignalSetter<<TextAreaData as ControlData>::ReturnType>,
-        validation_state: Signal<Result<(), String>>,
+        validation_state: Signal<ValidationState>,
     ) -> View;
 
     /// Renders a group of radio buttons.
@@ -131,7 +132,7 @@ pub trait FormStyle: 'static {
         control: Rc<ControlRenderData<Self, RadioButtonsData>>,
         value_getter: Signal<<RadioButtonsData as ControlData>::ReturnType>,
         value_setter: SignalSetter<<RadioButtonsData as ControlData>::ReturnType>,
-        validation_state: Signal<Result<(), String>>,
+        validation_state: Signal<ValidationState>,
     ) -> View;
 
     /// Renders a select (or dropdown) control.
@@ -142,7 +143,7 @@ pub trait FormStyle: 'static {
         control: Rc<ControlRenderData<Self, SelectData>>,
         value_getter: Signal<<SelectData as ControlData>::ReturnType>,
         value_setter: SignalSetter<<SelectData as ControlData>::ReturnType>,
-        validation_state: Signal<Result<(), String>>,
+        validation_state: Signal<ValidationState>,
     ) -> View;
 
     /// Renders a checkbox control.
@@ -163,7 +164,7 @@ pub trait FormStyle: 'static {
         control: Rc<ControlRenderData<Self, StepperData>>,
         value_getter: Signal<<StepperData as ControlData>::ReturnType>,
         value_setter: SignalSetter<<StepperData as ControlData>::ReturnType>,
-        validation_state: Signal<Result<(), String>>,
+        validation_state: Signal<ValidationState>,
     ) -> View;
 
     /// Renders a slider control.
@@ -174,6 +175,6 @@ pub trait FormStyle: 'static {
         control: Rc<ControlRenderData<Self, SliderData>>,
         value_getter: Signal<<SliderData as ControlData>::ReturnType>,
         value_setter: SignalSetter<<SliderData as ControlData>::ReturnType>,
-        validation_state: Signal<Result<(), String>>,
+        validation_state: Signal<ValidationState>,
     ) -> View;
 }

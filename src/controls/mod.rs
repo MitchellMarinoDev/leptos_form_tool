@@ -47,6 +47,58 @@ impl<FS, FD: 'static, F> RenderFn<FS, FD> for F where
 {
 }
 
+/// The possible states for a validated control
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub enum ValidationState {
+    /// Parsing and validation passed. No errors
+    #[default]
+    Passed,
+    /// Error when parsing the field.
+    ParseError(String),
+    /// Error when validating the field.
+    ValidationError(String),
+}
+impl ValidationState {
+    /// Gets the error message if there is a parse or validation error.
+    pub fn msg(&self) -> Option<&String> {
+        match self {
+            ValidationState::Passed => None,
+            ValidationState::ParseError(e) => Some(e),
+            ValidationState::ValidationError(e) => Some(e),
+        }
+    }
+    /// Takes the error message if there is a parse or validation error.
+    pub fn take_msg(self) -> Option<String> {
+        match self {
+            ValidationState::Passed => None,
+            ValidationState::ParseError(e) => Some(e),
+            ValidationState::ValidationError(e) => Some(e),
+        }
+    }
+
+    /// Returns true if self is `Passed`.
+    pub fn is_passed(&self) -> bool {
+        matches!(self, ValidationState::Passed)
+    }
+    /// Returns true if self is either `ParseError` or `ValidationError`.
+    pub fn is_err(&self) -> bool {
+        matches!(
+            self,
+            ValidationState::ParseError(_) | ValidationState::ValidationError(_)
+        )
+    }
+
+    /// Returns true if self is `ParseError`.
+    pub fn is_parse_err(&self) -> bool {
+        matches!(self, ValidationState::ParseError(_))
+    }
+
+    /// Returns true if self is `ValidationError`.
+    pub fn is_validation_err(&self) -> bool {
+        matches!(self, ValidationState::ValidationError(_))
+    }
+}
+
 /// The possibilities for when a control updates the form data.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum UpdateEvent {
@@ -78,7 +130,7 @@ pub trait ControlData: 'static {
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
-        validation_state: Signal<Result<(), String>>,
+        validation_state: Signal<ValidationState>,
     ) -> View;
 }
 pub trait ValidatedControlData: ControlData {}

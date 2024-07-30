@@ -1,4 +1,6 @@
-use super::{BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData};
+use super::{
+    BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, ValidationState,
+};
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
 use leptos::{MaybeSignal, Signal, SignalSetter, View};
 use std::rc::Rc;
@@ -31,7 +33,7 @@ impl ControlData for SliderData {
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
-        validation_state: Signal<Result<(), String>>,
+        validation_state: Signal<ValidationState>,
     ) -> View {
         fs.slider(control, value_getter, value_setter, validation_state)
     }
