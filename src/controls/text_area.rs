@@ -1,6 +1,6 @@
 use super::{
     BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, UpdateEvent,
-    ValidatedControlData,
+    ValidatedControlData, ValidationState,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
 use leptos::{Signal, SignalSetter, View};
@@ -23,7 +23,7 @@ impl ControlData for TextAreaData {
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
-        validation_state: Signal<Result<(), String>>,
+        validation_state: Signal<ValidationState>,
     ) -> View {
         fs.text_area(control, value_getter, value_setter, validation_state)
     }

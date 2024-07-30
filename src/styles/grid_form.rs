@@ -5,7 +5,7 @@ use crate::{
         output::OutputData, radio_buttons::RadioButtonsData, select::SelectData,
         slider::SliderData, spacer::SpacerData, stepper::StepperData, submit::SubmitData,
         text_area::TextAreaData, text_input::TextInputData, ControlData, ControlRenderData,
-        UpdateEvent,
+        UpdateEvent, ValidationState,
     },
     FormToolData,
 };
@@ -160,7 +160,7 @@ impl FormStyle for GridFormStyle {
         control: Rc<ControlRenderData<Self, TextInputData>>,
         value_getter: Signal<<TextInputData as ControlData>::ReturnType>,
         value_setter: SignalSetter<<TextInputData as ControlData>::ReturnType>,
-        validation_state: Signal<Result<(), String>>,
+        validation_state: Signal<ValidationState>,
     ) -> View {
         let input = view! {
             <input
@@ -191,7 +191,7 @@ impl FormStyle for GridFormStyle {
                 <label for=&control.data.name class="form_label">
                     {control.data.label.as_ref()}
                 </label>
-                <span class="form_error">{move || validation_state.get().err()}</span>
+                <span class="form_error">{move || validation_state.get().take_msg()}</span>
             </div>
             {input}
         }
@@ -205,7 +205,7 @@ impl FormStyle for GridFormStyle {
         control: Rc<ControlRenderData<Self, TextAreaData>>,
         value_getter: Signal<<TextAreaData as ControlData>::ReturnType>,
         value_setter: SignalSetter<<TextAreaData as ControlData>::ReturnType>,
-        validation_state: Signal<Result<(), String>>,
+        validation_state: Signal<ValidationState>,
     ) -> View {
         let input = view! {
             <textarea
@@ -236,7 +236,7 @@ impl FormStyle for GridFormStyle {
                 <label for=&control.data.name class="form_label">
                     {control.data.label.as_ref()}
                 </label>
-                <span class="form_error">{move || validation_state.get().err()}</span>
+                <span class="form_error">{move || validation_state.get().take_msg()}</span>
             </div>
             {input}
         }
@@ -250,7 +250,7 @@ impl FormStyle for GridFormStyle {
         control: Rc<ControlRenderData<Self, RadioButtonsData>>,
         value_getter: Signal<<RadioButtonsData as ControlData>::ReturnType>,
         value_setter: SignalSetter<<RadioButtonsData as ControlData>::ReturnType>,
-        validation_state: Signal<Result<(), String>>,
+        validation_state: Signal<ValidationState>,
     ) -> View {
         let buttons_view = control
             .data
@@ -288,7 +288,7 @@ impl FormStyle for GridFormStyle {
                 <label for=&control.data.name class="form_label">
                     {control.data.label.as_ref()}
                 </label>
-                <span class="form_error">{move || validation_state.get().err()}</span>
+                <span class="form_error">{move || validation_state.get().take_msg()}</span>
             </div>
             <div
                 class="form_input"
@@ -307,7 +307,7 @@ impl FormStyle for GridFormStyle {
         control: Rc<ControlRenderData<Self, SelectData>>,
         value_getter: Signal<<SelectData as ControlData>::ReturnType>,
         value_setter: SignalSetter<<SelectData as ControlData>::ReturnType>,
-        validation_state: Signal<Result<(), String>>,
+        validation_state: Signal<ValidationState>,
     ) -> View {
         let control_clone = control.clone();
         let options_view = move || {
@@ -341,7 +341,7 @@ impl FormStyle for GridFormStyle {
                 <label for=&control.data.name class="form_label">
                     {control.data.label.as_ref()}
                 </label>
-                <span class="form_error">{move || validation_state.get().err()}</span>
+                <span class="form_error">{move || validation_state.get().take_msg()}</span>
             </div>
             <select
                 id=&control.data.name
@@ -399,21 +399,19 @@ impl FormStyle for GridFormStyle {
         self.custom_component(&control.styles, view)
     }
 
-    // TODO: remove stepper, replace with a `.number()` function on the text
-    // field.
     fn stepper(
         &self,
         control: Rc<ControlRenderData<Self, StepperData>>,
         value_getter: Signal<<StepperData as ControlData>::ReturnType>,
         value_setter: SignalSetter<<StepperData as ControlData>::ReturnType>,
-        validation_state: Signal<Result<(), String>>,
+        validation_state: Signal<ValidationState>,
     ) -> View {
         let view = view! {
             <div>
                 <label for=&control.data.name class="form_label">
                     {control.data.label.as_ref()}
                 </label>
-                <span class="form_error">{move || validation_state.get().err()}</span>
+                <span class="form_error">{move || validation_state.get().take_msg()}</span>
             </div>
             <input
                 type="number"
@@ -440,14 +438,14 @@ impl FormStyle for GridFormStyle {
         control: Rc<ControlRenderData<Self, SliderData>>,
         value_getter: Signal<<SliderData as ControlData>::ReturnType>,
         value_setter: SignalSetter<<SliderData as ControlData>::ReturnType>,
-        validation_state: Signal<Result<(), String>>,
+        validation_state: Signal<ValidationState>,
     ) -> View {
         let view = view! {
             <div>
                 <label for=&control.data.name class="form_label">
                     {control.data.label.as_ref()}
                 </label>
-                <span class="form_error">{move || validation_state.get().err()}</span>
+                <span class="form_error">{move || validation_state.get().take_msg()}</span>
             </div>
             <input
                 type="range"

@@ -2,7 +2,7 @@ use crate::{
     controls::{
         BuilderCxFn, BuilderFn, BuiltControlData, BuiltVanityControlData, ControlBuilder,
         ControlData, ControlRenderData, FieldSetter, ParseFn, RenderFn, ValidationCb, ValidationFn,
-        VanityControlBuilder, VanityControlData,
+        ValidationState, VanityControlBuilder, VanityControlData,
     },
     form::{Form, FormToolData, FormValidator},
     styles::FormStyle,
@@ -195,34 +195,37 @@ impl<FD: FormToolData> FormBuilder<FD> {
         } = control_data;
 
         let render_data = Rc::new(render_data);
-        let (validation_signal, validation_signal_set) = create_signal(Ok(()));
+        let (validation_signal, validation_signal_set) = create_signal(ValidationState::Passed);
         let validation_fn_clone = validation_fn.clone();
-        let value_getter = move || {
-            let fd = fd.get();
+        let (value_getter, value_setter) = create_signal(unparse_fn(getter(fd.get_untracked())));
+        create_effect(move |_| {
+            fd.track();
+            if validation_signal.get().is_parse_err() {
+                return;
+            }
+
+            let fd = fd.get_untracked();
 
             // rerun validation if it is failing
-            if validation_signal.get_untracked().is_err() {
+            if validation_signal.get_untracked().is_validation_err() {
                 if let Some(ref validation_fn) = validation_fn_clone {
                     let validation_result = validation_fn(&fd);
                     // if validation succeeds this time, resolve the validation error
                     if validation_result.is_ok() {
-                        validation_signal_set.set(Ok(()));
+                        validation_signal_set.set(ValidationState::Passed);
                     }
                 }
             }
-            unparse_fn(getter(fd))
-        };
-        let value_getter = value_getter.into_signal();
 
+            let value = unparse_fn(getter(fd));
+            value_setter.set(value);
+        });
+        let value_getter = value_getter.into();
+
+        let validation_fn_clone = validation_fn.clone();
         let cloned_show_when = show_when.clone();
         let cloned_cx = cx.clone();
         let validation_cb = move || {
-            // first check if the validation signal is an error so that we
-            // can fail on parsing issues too
-            if let Some(Err(_)) = validation_signal.try_get_untracked() {
-                return false;
-            }
-
             // validation for non-visible fields always succeeds
             if let Some(ref show_when) = cloned_show_when {
                 if !show_when(fd.into(), cloned_cx.clone()) {
@@ -230,8 +233,16 @@ impl<FD: FormToolData> FormBuilder<FD> {
                 }
             }
 
+            // fail on parse falures
+            if validation_signal
+                .try_get_untracked()
+                .is_some_and(|v| v.is_parse_err())
+            {
+                return false;
+            }
+
             // run the validation function on the value now
-            let validation_fn = match validation_fn {
+            let validation_fn = match validation_fn_clone {
                 Some(ref v) => v,
                 None => return true, // No validation function so validation passes
             };
@@ -239,13 +250,17 @@ impl<FD: FormToolData> FormBuilder<FD> {
             let data = fd.get_untracked();
             let validation_result = validation_fn(&data);
             let succeeded = validation_result.is_ok();
-            validation_signal_set.set(validation_result);
+            let new_state = match validation_result {
+                Ok(()) => ValidationState::Passed,
+                Err(e) => ValidationState::ValidationError(e),
+            };
+            validation_signal_set.set(new_state);
             succeeded
         };
         let validation_cb = Box::new(validation_cb);
 
         let value_setter = Self::create_value_setter(
-            validation_cb.clone(),
+            validation_fn.clone(),
             validation_signal_set,
             parse_fn,
             setter,
@@ -273,20 +288,17 @@ impl<FD: FormToolData> FormBuilder<FD> {
 
     /// Helper for creating a setter function.
     fn create_value_setter<CRT: 'static, FDT: 'static>(
-        validation_cb: Box<dyn Fn() -> bool + 'static>,
-        validation_signal_set: WriteSignal<Result<(), String>>,
+        validation_fn: Option<Rc<dyn ValidationFn<FD>>>,
+        validation_signal_set: WriteSignal<ValidationState>,
         parse_fn: Box<dyn ParseFn<CRT, FDT>>,
         setter: Rc<dyn FieldSetter<FD, FDT>>,
         fd: RwSignal<FD>,
     ) -> SignalSetter<CRT> {
         let value_setter = move |value| {
             let parsed = match parse_fn(value) {
-                Ok(p) => {
-                    validation_signal_set.set(Ok(()));
-                    p
-                }
+                Ok(p) => p,
                 Err(e) => {
-                    validation_signal_set.set(Err(e));
+                    validation_signal_set.set(ValidationState::ParseError(e));
                     return;
                 }
             };
@@ -297,7 +309,22 @@ impl<FD: FormToolData> FormBuilder<FD> {
             });
 
             // run validation
-            (validation_cb)();
+            let validation_fn = match validation_fn {
+                Some(ref v) => v,
+                None => {
+                    // No validation function so validation passes
+                    validation_signal_set.set(ValidationState::Passed);
+                    return;
+                }
+            };
+
+            let data = fd.get_untracked();
+            let validation_result = validation_fn(&data);
+            let new_state = match validation_result {
+                Ok(()) => ValidationState::Passed,
+                Err(e) => ValidationState::ValidationError(e),
+            };
+            validation_signal_set.set(new_state);
         };
         value_setter.into_signal_setter()
     }
