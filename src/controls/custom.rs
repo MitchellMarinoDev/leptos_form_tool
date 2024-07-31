@@ -7,7 +7,7 @@ use std::rc::Rc;
 
 impl<FD: FormToolData> FormBuilder<FD> {
     /// Builds a custom component and adds it to the form.
-    pub fn custom<CC: ControlData, FDT: Clone + PartialEq + 'static>(
+    pub fn custom<CC: ControlData<FD>, FDT: Clone + PartialEq + 'static>(
         mut self,
         control_data: CC,
         builder: impl BuilderFn<ControlBuilder<FD, CC, FDT>>,
@@ -20,7 +20,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
 
     /// Builds a custom component using the form's context and adds it to the
     /// form.
-    pub fn custom_cx<CC: ControlData, FDT: Clone + PartialEq + 'static>(
+    pub fn custom_cx<CC: ControlData<FD>, FDT: Clone + PartialEq + 'static>(
         mut self,
         control_data: CC,
         builder: impl BuilderCxFn<ControlBuilder<FD, CC, FDT>, FD::Context>,
@@ -32,7 +32,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
     }
 
     /// Builds a custom vanity component and adds it to the form.
-    pub fn custom_vanity<CC: VanityControlData>(
+    pub fn custom_vanity<CC: VanityControlData<FD>>(
         mut self,
         control_data: CC,
         builder: impl BuilderFn<VanityControlBuilder<FD, CC>>,
@@ -45,7 +45,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
 
     /// Builds a custom vanity component using the form's context and adds it
     /// to the form.
-    pub fn custom_vanity_cx<CC: VanityControlData>(
+    pub fn custom_vanity_cx<CC: VanityControlData<FD>>(
         mut self,
         control_data: CC,
         builder: impl BuilderCxFn<VanityControlBuilder<FD, CC>, FD::Context>,

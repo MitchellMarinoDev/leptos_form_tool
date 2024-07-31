@@ -3,7 +3,7 @@ use super::{
     ValidationState,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{MaybeSignal, Signal, SignalSetter, View};
+use leptos::{MaybeSignal, RwSignal, Signal, SignalSetter, View};
 use std::rc::Rc;
 
 /// Data used for the stepper control.
@@ -16,20 +16,21 @@ pub struct StepperData {
     pub max: Option<MaybeSignal<i32>>,
 }
 
-impl ControlData for StepperData {
+impl<FD: FormToolData> ControlData<FD> for StepperData {
     type ReturnType = String;
 
-    fn build_control<FS: FormStyle>(
+    fn render_control<FS: FormStyle>(
         fs: &FS,
+        _fd: RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,
     ) -> View {
-        fs.stepper(control, value_getter, value_setter, validation_state)
+        fs.stepper::<FD>(control, value_getter, value_setter, validation_state)
     }
 }
-impl ValidatedControlData for StepperData {}
+impl<FD: FormToolData> ValidatedControlData<FD> for StepperData {}
 
 impl<FD: FormToolData> FormBuilder<FD> {
     /// Builds a stepper control and adds it to the form.

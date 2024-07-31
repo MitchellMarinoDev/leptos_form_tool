@@ -3,7 +3,7 @@ use super::{
     VanityControlData,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{prelude::Signal, View};
+use leptos::{prelude::Signal, RwSignal, View};
 use std::rc::Rc;
 
 /// Data used for the submit button control.
@@ -12,16 +12,17 @@ pub struct SubmitData {
     pub text: String,
 }
 
-impl VanityControlData for SubmitData {
-    fn build_control<FS: FormStyle>(
+impl<FD: FormToolData> VanityControlData<FD> for SubmitData {
+    fn render_control<FS: FormStyle>(
         fs: &FS,
+        _fd: RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Option<Signal<String>>,
     ) -> View {
         fs.submit(control, value_getter)
     }
 }
-impl GetterVanityControlData for SubmitData {}
+impl<FD: FormToolData> GetterVanityControlData<FD> for SubmitData {}
 
 impl<FD: FormToolData> FormBuilder<FD> {
     /// Builds a submit button and adds it to the form.

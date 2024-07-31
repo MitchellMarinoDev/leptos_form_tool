@@ -1,120 +1,79 @@
-use super::FieldGetter;
-use super::{BuilderCxFn, BuilderFn, ControlRenderData, ShowWhenFn};
+use super::{BuilderCxFn, BuilderFn, ControlRenderData, VanityControlBuilder};
+use super::{GetterVanityControlData, VanityControlData};
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{view, IntoSignal, RwSignal, Show, Signal, SignalGet};
+use leptos::{RwSignal, Signal, View};
 use std::rc::Rc;
 use web_sys::MouseEvent;
 
 type ButtonAction<FD> = dyn Fn(MouseEvent, RwSignal<FD>) + 'static;
 
 /// Data used for the button control.
-pub struct ButtonData<FD: FormToolData> {
+pub struct ButtonBuildData<FD: FormToolData> {
     pub action: Option<Rc<ButtonAction<FD>>>,
 }
-impl<FD: FormToolData> Default for ButtonData<FD> {
+/// Data used for the button control.
+pub struct ButtonData {
+    pub action: Option<Rc<dyn Fn(MouseEvent)>>,
+}
+impl<FD: FormToolData> Default for ButtonBuildData<FD> {
     fn default() -> Self {
-        ButtonData { action: None }
+        ButtonBuildData { action: None }
     }
 }
-impl<FD: FormToolData> Clone for ButtonData<FD> {
+impl<FD: FormToolData> Clone for ButtonBuildData<FD> {
     fn clone(&self) -> Self {
-        ButtonData {
+        ButtonBuildData {
             action: self.action.clone(),
         }
     }
 }
 
+impl<FD: FormToolData> VanityControlData<FD> for ButtonBuildData<FD> {
+    fn render_control<FS: FormStyle>(
+        fs: &FS,
+        fd: RwSignal<FD>,
+        control: Rc<ControlRenderData<FS, Self>>,
+        value_getter: Option<Signal<String>>,
+    ) -> View {
+        let action = control.data.action.as_ref().map(|a| {
+            let a = a.clone();
+            let action = move |ev: MouseEvent| a(ev, fd);
+            Rc::new(action) as Rc<dyn Fn(MouseEvent)>
+        });
+
+        let new_control = ControlRenderData {
+            styles: control.styles.clone(),
+            data: ButtonData { action },
+        };
+        let new_control = Rc::new(new_control);
+        fs.button(new_control, value_getter)
+    }
+}
+impl<FD: FormToolData> GetterVanityControlData<FD> for ButtonBuildData<FD> {}
+
 impl<FD: FormToolData> FormBuilder<FD> {
     /// Builds a button and adds it to the form.
-    pub fn button(self, builder: impl BuilderFn<ButtonBuilder<FD>>) -> Self {
-        let button_builder = ButtonBuilder::new();
-        let control = builder(button_builder);
-        self.button_helper(control)
+    pub fn button(
+        self,
+        builder: impl BuilderFn<VanityControlBuilder<FD, ButtonBuildData<FD>>>,
+    ) -> Self {
+        self.new_vanity(builder)
     }
 
     /// Builds a button using the form's context and adds it to the form.
-    pub fn button_cx(self, builder: impl BuilderCxFn<ButtonBuilder<FD>, FD::Context>) -> Self {
-        let button_builder = ButtonBuilder::new();
-        let control = builder(button_builder, self.cx.clone());
-        self.button_helper(control)
-    }
-
-    /// The common functionality for adding a button.
-    fn button_helper(mut self, control: ButtonBuilder<FD>) -> Self {
-        let render_data = ControlRenderData {
-            data: control.data,
-            styles: control.styles,
-        };
-        let show_when = control.show_when;
-
-        let cx = self.cx.clone();
-        let render_fn = move |fs: Rc<FD::Style>, fd: RwSignal<FD>| {
-            let render_data = Rc::new(render_data);
-            let value_getter = control.getter.map(|getter| {
-                let value_getter = move || getter(fd.get());
-                value_getter.into_signal()
-            });
-
-            let view = move || fs.clone().button(render_data.clone(), fd, value_getter);
-            let view = match show_when {
-                Some(when) => {
-                    let when = move || when(fd.into(), cx.clone());
-                    view! { <Show when=when>{view.clone()}</Show> }
-                }
-                None => view(),
-            };
-            (view, None)
-        };
-        self.render_fns.push(Box::new(render_fn));
-
-        self
-    }
-}
-
-/// The struct that allows you to specify the attributes of the button.
-pub struct ButtonBuilder<FD: FormToolData> {
-    pub(crate) styles: Vec<<FD::Style as FormStyle>::StylingAttributes>,
-    pub(crate) data: ButtonData<FD>,
-    pub(crate) getter: Option<Rc<dyn FieldGetter<FD, String>>>,
-    pub(crate) show_when: Option<Box<dyn ShowWhenFn<FD, FD::Context>>>,
-}
-
-impl<FD: FormToolData> ButtonBuilder<FD> {
-    /// Creates a new [`ButtonBuilder`].
-    fn new() -> Self {
-        ButtonBuilder {
-            styles: Vec::default(),
-            data: ButtonData::default(),
-            getter: None,
-            show_when: None,
-        }
-    }
-
-    /// Sets the function to decide when to render the control.
-    pub fn show_when(
-        mut self,
-        when: impl Fn(Signal<FD>, Rc<FD::Context>) -> bool + 'static,
+    pub fn button_cx(
+        self,
+        builder: impl BuilderCxFn<VanityControlBuilder<FD, ButtonBuildData<FD>>, FD::Context>,
     ) -> Self {
-        self.show_when = Some(Box::new(when));
-        self
+        self.new_vanity_cx(builder)
     }
+}
 
-    /// Adds a styling attribute to the button.
-    pub fn style(mut self, style: <FD::Style as FormStyle>::StylingAttributes) -> Self {
-        self.styles.push(style);
-        self
-    }
-
+impl<FD: FormToolData> VanityControlBuilder<FD, ButtonBuildData<FD>> {
     /// Sets the text of the button.
     pub fn text(mut self, text: impl ToString) -> Self {
         let text = text.to_string();
         self.getter = Some(Rc::new(move |_| text.clone()));
-        self
-    }
-
-    /// A getter for the button text.
-    pub fn dynamic_text(mut self, getter: impl FieldGetter<FD, String>) -> Self {
-        self.getter = Some(Rc::new(getter));
         self
     }
 

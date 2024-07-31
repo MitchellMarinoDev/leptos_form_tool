@@ -3,7 +3,7 @@ use super::{
     ValidatedControlData, ValidationState,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{Signal, SignalSetter, View};
+use leptos::{RwSignal, Signal, SignalSetter, View};
 use std::rc::Rc;
 
 /// Data used for the text area control.
@@ -15,20 +15,21 @@ pub struct TextAreaData {
     pub update_event: UpdateEvent,
 }
 
-impl ControlData for TextAreaData {
+impl<FD: FormToolData> ControlData<FD> for TextAreaData {
     type ReturnType = String;
 
-    fn build_control<FS: FormStyle>(
+    fn render_control<FS: FormStyle>(
         fs: &FS,
+        _fd: RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,
     ) -> View {
-        fs.text_area(control, value_getter, value_setter, validation_state)
+        fs.text_area::<FD>(control, value_getter, value_setter, validation_state)
     }
 }
-impl ValidatedControlData for TextAreaData {}
+impl<FD: FormToolData> ValidatedControlData<FD> for TextAreaData {}
 
 impl<FD: FormToolData> FormBuilder<FD> {
     /// Builds a text area control and adds it to the form.

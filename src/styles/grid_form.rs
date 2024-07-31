@@ -1,11 +1,20 @@
 use super::FormStyle;
 use crate::{
     controls::{
-        button::ButtonData, checkbox::CheckboxData, heading::HeadingData, hidden::HiddenData,
-        output::OutputData, radio_buttons::RadioButtonsData, select::SelectData,
-        slider::SliderData, spacer::SpacerData, stepper::StepperData, submit::SubmitData,
-        text_area::TextAreaData, text_input::TextInputData, ControlData, ControlRenderData,
-        UpdateEvent, ValidationState,
+        button::ButtonData,
+        checkbox::CheckboxData,
+        heading::HeadingData,
+        hidden::HiddenData,
+        output::OutputData,
+        radio_buttons::RadioButtonsData,
+        select::{SelectBuildData, SelectData},
+        slider::SliderData,
+        spacer::SpacerData,
+        stepper::StepperData,
+        submit::SubmitData,
+        text_area::TextAreaData,
+        text_input::TextInputData,
+        ControlData, ControlRenderData, UpdateEvent, ValidationState,
     },
     FormToolData,
 };
@@ -105,16 +114,15 @@ impl FormStyle for GridFormStyle {
         )
     }
 
-    fn button<FD: FormToolData>(
+    fn button(
         &self,
-        control: Rc<ControlRenderData<Self, ButtonData<FD>>>,
-        data_signal: RwSignal<FD>,
+        control: Rc<ControlRenderData<Self, ButtonData>>,
         value_getter: Option<Signal<String>>,
     ) -> View {
         let action = control.data.action.clone();
         let on_click = move |ev: MouseEvent| {
-            if let Some(action) = action.clone() {
-                action(ev, data_signal)
+            if let Some(ref action) = action {
+                action(ev)
             }
         };
 
@@ -155,11 +163,11 @@ impl FormStyle for GridFormStyle {
         .into_view()
     }
 
-    fn text_input(
+    fn text_input<FD: FormToolData>(
         &self,
         control: Rc<ControlRenderData<Self, TextInputData>>,
-        value_getter: Signal<<TextInputData as ControlData>::ReturnType>,
-        value_setter: SignalSetter<<TextInputData as ControlData>::ReturnType>,
+        value_getter: Signal<<TextInputData as ControlData<FD>>::ReturnType>,
+        value_setter: SignalSetter<<TextInputData as ControlData<FD>>::ReturnType>,
         validation_state: Signal<ValidationState>,
     ) -> View {
         let input = view! {
@@ -200,11 +208,11 @@ impl FormStyle for GridFormStyle {
         self.custom_component(&control.styles, view)
     }
 
-    fn text_area(
+    fn text_area<FD: FormToolData>(
         &self,
         control: Rc<ControlRenderData<Self, TextAreaData>>,
-        value_getter: Signal<<TextAreaData as ControlData>::ReturnType>,
-        value_setter: SignalSetter<<TextAreaData as ControlData>::ReturnType>,
+        value_getter: Signal<<TextAreaData as ControlData<FD>>::ReturnType>,
+        value_setter: SignalSetter<<TextAreaData as ControlData<FD>>::ReturnType>,
         validation_state: Signal<ValidationState>,
     ) -> View {
         let input = view! {
@@ -245,11 +253,11 @@ impl FormStyle for GridFormStyle {
         self.custom_component(&control.styles, view)
     }
 
-    fn radio_buttons(
+    fn radio_buttons<FD: FormToolData>(
         &self,
         control: Rc<ControlRenderData<Self, RadioButtonsData>>,
-        value_getter: Signal<<RadioButtonsData as ControlData>::ReturnType>,
-        value_setter: SignalSetter<<RadioButtonsData as ControlData>::ReturnType>,
+        value_getter: Signal<<RadioButtonsData as ControlData<FD>>::ReturnType>,
+        value_setter: SignalSetter<<RadioButtonsData as ControlData<FD>>::ReturnType>,
         validation_state: Signal<ValidationState>,
     ) -> View {
         let buttons_view = control
@@ -302,11 +310,11 @@ impl FormStyle for GridFormStyle {
         self.custom_component(&control.styles, view)
     }
 
-    fn select(
+    fn select<FD: FormToolData>(
         &self,
         control: Rc<ControlRenderData<Self, SelectData>>,
-        value_getter: Signal<<SelectData as ControlData>::ReturnType>,
-        value_setter: SignalSetter<<SelectData as ControlData>::ReturnType>,
+        value_getter: Signal<<SelectBuildData<FD> as ControlData<FD>>::ReturnType>,
+        value_setter: SignalSetter<<SelectBuildData<FD> as ControlData<FD>>::ReturnType>,
         validation_state: Signal<ValidationState>,
     ) -> View {
         let control_clone = control.clone();
@@ -361,11 +369,11 @@ impl FormStyle for GridFormStyle {
         self.custom_component(&control.styles, view)
     }
 
-    fn checkbox(
+    fn checkbox<FD: FormToolData>(
         &self,
         control: Rc<ControlRenderData<Self, CheckboxData>>,
-        value_getter: Signal<<CheckboxData as ControlData>::ReturnType>,
-        value_setter: SignalSetter<<CheckboxData as ControlData>::ReturnType>,
+        value_getter: Signal<<CheckboxData as ControlData<FD>>::ReturnType>,
+        value_setter: SignalSetter<<CheckboxData as ControlData<FD>>::ReturnType>,
     ) -> View {
         let label = control
             .data
@@ -399,11 +407,11 @@ impl FormStyle for GridFormStyle {
         self.custom_component(&control.styles, view)
     }
 
-    fn stepper(
+    fn stepper<FD: FormToolData>(
         &self,
         control: Rc<ControlRenderData<Self, StepperData>>,
-        value_getter: Signal<<StepperData as ControlData>::ReturnType>,
-        value_setter: SignalSetter<<StepperData as ControlData>::ReturnType>,
+        value_getter: Signal<<StepperData as ControlData<FD>>::ReturnType>,
+        value_setter: SignalSetter<<StepperData as ControlData<FD>>::ReturnType>,
         validation_state: Signal<ValidationState>,
     ) -> View {
         let view = view! {
@@ -433,11 +441,11 @@ impl FormStyle for GridFormStyle {
         self.custom_component(&control.styles, view)
     }
 
-    fn slider(
+    fn slider<FD: FormToolData>(
         &self,
         control: Rc<ControlRenderData<Self, SliderData>>,
-        value_getter: Signal<<SliderData as ControlData>::ReturnType>,
-        value_setter: SignalSetter<<SliderData as ControlData>::ReturnType>,
+        value_getter: Signal<<SliderData as ControlData<FD>>::ReturnType>,
+        value_setter: SignalSetter<<SliderData as ControlData<FD>>::ReturnType>,
         validation_state: Signal<ValidationState>,
     ) -> View {
         let view = view! {

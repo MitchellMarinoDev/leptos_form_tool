@@ -2,7 +2,7 @@ use super::{
     BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, ValidationState,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{MaybeSignal, Signal, SignalSetter, View};
+use leptos::{MaybeSignal, RwSignal, Signal, SignalSetter, View};
 use std::rc::Rc;
 
 /// Data used for the slider control.
@@ -25,17 +25,18 @@ impl Default for SliderData {
     }
 }
 
-impl ControlData for SliderData {
+impl<FD: FormToolData> ControlData<FD> for SliderData {
     type ReturnType = i32;
 
-    fn build_control<FS: FormStyle>(
+    fn render_control<FS: FormStyle>(
         fs: &FS,
+        _fd: RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,
     ) -> View {
-        fs.slider(control, value_getter, value_setter, validation_state)
+        fs.slider::<FD>(control, value_getter, value_setter, validation_state)
     }
 }
 
