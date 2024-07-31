@@ -1,9 +1,9 @@
 [package]
 name = "leptos_form_tool"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["Mitchell Marino"]
-description = "A declaritive way to create forms for leptos."
+description = "A declarative way to create forms for leptos."
 readme = "README.md"
 repository = "https://github.com/MitchellMarinoDev/leptos_form_tool.git"
 license = "MIT OR Apache-2.0"
