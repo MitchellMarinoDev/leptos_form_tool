@@ -1,23 +1,10 @@
 mod grid_form;
 
-use crate::{
-    controls::{
-        button::ButtonData,
-        checkbox::CheckboxData,
-        heading::HeadingData,
-        hidden::HiddenData,
-        output::OutputData,
-        radio_buttons::RadioButtonsData,
-        select::{SelectBuildData, SelectData},
-        slider::SliderData,
-        spacer::SpacerData,
-        stepper::StepperData,
-        submit::SubmitData,
-        text_area::TextAreaData,
-        text_input::TextInputData,
-        ControlData, ControlRenderData, ValidationState,
-    },
-    FormToolData,
+use crate::controls::{
+    button::ButtonData, checkbox::CheckboxData, heading::HeadingData, hidden::HiddenData,
+    output::OutputData, radio_buttons::RadioButtonsData, select::SelectData, slider::SliderData,
+    spacer::SpacerData, stepper::StepperData, submit::SubmitData, text_area::TextAreaData,
+    text_input::TextInputData, ControlRenderData, ValidationState,
 };
 use leptos::{Signal, SignalSetter, View};
 use std::rc::Rc;
@@ -113,76 +100,76 @@ pub trait FormStyle: 'static {
     /// Renders a text input control.
     ///
     /// See [`TextInputData`].
-    fn text_input<FD: FormToolData>(
+    fn text_input(
         &self,
         control: Rc<ControlRenderData<Self, TextInputData>>,
-        value_getter: Signal<<TextInputData as ControlData<FD>>::ReturnType>,
-        value_setter: SignalSetter<<TextInputData as ControlData<FD>>::ReturnType>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
     ) -> View;
 
     /// Renders a text area control.
     ///
     /// See [`TextAreaData`].
-    fn text_area<FD: FormToolData>(
+    fn text_area(
         &self,
         control: Rc<ControlRenderData<Self, TextAreaData>>,
-        value_getter: Signal<<TextAreaData as ControlData<FD>>::ReturnType>,
-        value_setter: SignalSetter<<TextAreaData as ControlData<FD>>::ReturnType>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
     ) -> View;
 
     /// Renders a group of radio buttons.
     ///
     /// See [`RadioButtonsData`].
-    fn radio_buttons<FD: FormToolData>(
+    fn radio_buttons(
         &self,
         control: Rc<ControlRenderData<Self, RadioButtonsData>>,
-        value_getter: Signal<<RadioButtonsData as ControlData<FD>>::ReturnType>,
-        value_setter: SignalSetter<<RadioButtonsData as ControlData<FD>>::ReturnType>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
     ) -> View;
 
     /// Renders a select (or dropdown) control.
     ///
     /// See [`SelectData`].
-    fn select<FD: FormToolData>(
+    fn select(
         &self,
         control: Rc<ControlRenderData<Self, SelectData>>,
-        value_getter: Signal<<SelectBuildData<FD> as ControlData<FD>>::ReturnType>,
-        value_setter: SignalSetter<<SelectBuildData<FD> as ControlData<FD>>::ReturnType>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
     ) -> View;
 
     /// Renders a checkbox control.
     ///
     /// See [`CheckboxData`].
-    fn checkbox<FD: FormToolData>(
+    fn checkbox(
         &self,
         control: Rc<ControlRenderData<Self, CheckboxData>>,
-        value_getter: Signal<<CheckboxData as ControlData<FD>>::ReturnType>,
-        value_setter: SignalSetter<<CheckboxData as ControlData<FD>>::ReturnType>,
+        value_getter: Signal<bool>,
+        value_setter: SignalSetter<bool>,
     ) -> View;
 
     /// Renders a stepper control.
     ///
     /// See [`StepperData`].
-    fn stepper<FD: FormToolData>(
+    fn stepper(
         &self,
         control: Rc<ControlRenderData<Self, StepperData>>,
-        value_getter: Signal<<StepperData as ControlData<FD>>::ReturnType>,
-        value_setter: SignalSetter<<StepperData as ControlData<FD>>::ReturnType>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
     ) -> View;
 
     /// Renders a slider control.
     ///
     /// See [`SliderData`].
-    fn slider<FD: FormToolData>(
+    fn slider(
         &self,
         control: Rc<ControlRenderData<Self, SliderData>>,
-        value_getter: Signal<<SliderData as ControlData<FD>>::ReturnType>,
-        value_setter: SignalSetter<<SliderData as ControlData<FD>>::ReturnType>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
     ) -> View;
 }

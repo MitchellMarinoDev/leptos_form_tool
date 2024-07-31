@@ -8,9 +8,7 @@ use std::rc::Rc;
 
 /// Data used for the submit button control.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-pub struct SubmitData {
-    pub text: String,
-}
+pub struct SubmitData;
 
 impl<FD: FormToolData> VanityControlData<FD> for SubmitData {
     fn render_control<FS: FormStyle>(
@@ -41,7 +39,9 @@ impl<FD: FormToolData> FormBuilder<FD> {
 }
 
 impl<FD: FormToolData> VanityControlBuilder<FD, SubmitData> {
-    /// Sets the submit button's text.
+    /// Sets the text of the submit button to a static string.
+    ///
+    /// For dynamic button text, use the `getter` method.
     pub fn text(mut self, text: impl ToString) -> Self {
         let text = text.to_string();
         self.getter = Some(Rc::new(move |_| text.clone()));

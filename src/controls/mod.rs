@@ -122,7 +122,7 @@ pub trait GetterVanityControlData<FD: FormToolData>: VanityControlData<FD> {}
 
 /// A trait for the data needed to render an interactive control.
 pub trait ControlData<FD: FormToolData>: 'static {
-    /// This is the data type returned by this control.
+    /// This is the data type returned by this control. Usually a [`String`].
     type ReturnType: Clone;
 
     /// Builds the control, returning the [`View`] that was built.

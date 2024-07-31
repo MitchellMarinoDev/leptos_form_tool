@@ -39,7 +39,7 @@ impl<FD: FormToolData> ControlData<FD> for TextInputData {
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,
     ) -> View {
-        fs.text_input::<FD>(control, value_getter, value_setter, validation_state)
+        fs.text_input(control, value_getter, value_setter, validation_state)
     }
 }
 impl<FD: FormToolData> ValidatedControlData<FD> for TextInputData {}

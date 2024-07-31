@@ -7,13 +7,9 @@ use web_sys::MouseEvent;
 
 type ButtonAction<FD> = dyn Fn(MouseEvent, RwSignal<FD>) + 'static;
 
-/// Data used for the button control.
+/// Data used for the building button control.
 pub struct ButtonBuildData<FD: FormToolData> {
     pub action: Option<Rc<ButtonAction<FD>>>,
-}
-/// Data used for the button control.
-pub struct ButtonData {
-    pub action: Option<Rc<dyn Fn(MouseEvent)>>,
 }
 impl<FD: FormToolData> Default for ButtonBuildData<FD> {
     fn default() -> Self {
@@ -26,6 +22,11 @@ impl<FD: FormToolData> Clone for ButtonBuildData<FD> {
             action: self.action.clone(),
         }
     }
+}
+
+/// Data used for the button control.
+pub struct ButtonData {
+    pub action: Option<Rc<dyn Fn(MouseEvent)>>,
 }
 
 impl<FD: FormToolData> VanityControlData<FD> for ButtonBuildData<FD> {
@@ -70,7 +71,9 @@ impl<FD: FormToolData> FormBuilder<FD> {
 }
 
 impl<FD: FormToolData> VanityControlBuilder<FD, ButtonBuildData<FD>> {
-    /// Sets the text of the button.
+    /// Sets the text of the button to a static string.
+    ///
+    /// For dynamic button text, use the `getter` method.
     pub fn text(mut self, text: impl ToString) -> Self {
         let text = text.to_string();
         self.getter = Some(Rc::new(move |_| text.clone()));

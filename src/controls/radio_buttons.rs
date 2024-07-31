@@ -28,7 +28,7 @@ impl<FD: FormToolData> ControlData<FD> for RadioButtonsData {
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,
     ) -> View {
-        fs.radio_buttons::<FD>(control, value_getter, value_setter, validation_state)
+        fs.radio_buttons(control, value_getter, value_setter, validation_state)
     }
 }
 impl<FD: FormToolData> ValidatedControlData<FD> for RadioButtonsData {}

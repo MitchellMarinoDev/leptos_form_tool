@@ -26,7 +26,7 @@ impl<FD: FormToolData> ControlData<FD> for TextAreaData {
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,
     ) -> View {
-        fs.text_area::<FD>(control, value_getter, value_setter, validation_state)
+        fs.text_area(control, value_getter, value_setter, validation_state)
     }
 }
 impl<FD: FormToolData> ValidatedControlData<FD> for TextAreaData {}

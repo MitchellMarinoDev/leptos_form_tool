@@ -23,7 +23,7 @@ impl<FD: FormToolData> ControlData<FD> for CheckboxData {
         value_setter: SignalSetter<Self::ReturnType>,
         _validation_state: Signal<ValidationState>,
     ) -> View {
-        fs.checkbox::<FD>(control, value_getter, value_setter)
+        fs.checkbox(control, value_getter, value_setter)
     }
 }
 

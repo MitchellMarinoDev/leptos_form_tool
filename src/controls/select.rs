@@ -33,7 +33,20 @@ impl<FD: FormToolData> Default for SelectBuildData<FD> {
         }
     }
 }
+impl<FD: FormToolData> Clone for SelectBuildData<FD> {
+    fn clone(&self) -> Self {
+        SelectBuildData {
+            name: self.name.clone(),
+            label: self.label.clone(),
+            dynamic_options: self.dynamic_options.clone(),
+            options: self.options.clone(),
+            blank_option: self.blank_option.clone(),
+        }
+    }
+}
+
 /// Data used for the select control.
+#[derive(Default, Clone)]
 pub struct SelectData {
     pub name: String,
     pub label: Option<String>,
@@ -51,8 +64,6 @@ impl<FD: FormToolData> ControlData<FD> for SelectBuildData<FD> {
     fn render_control<FS: FormStyle>(
         fs: &FS,
         fd: RwSignal<FD>,
-        // TODO: does control need to be RC'ed at this point?
-        //       Button and select are having to rebuild them.
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
@@ -79,7 +90,7 @@ impl<FD: FormToolData> ControlData<FD> for SelectBuildData<FD> {
         };
         let new_control = Rc::new(new_control);
 
-        fs.select::<FD>(new_control, value_getter, value_setter, validation_state)
+        fs.select(new_control, value_getter, value_setter, validation_state)
     }
 }
 impl<FD: FormToolData> ValidatedControlData<FD> for SelectBuildData<FD> {}

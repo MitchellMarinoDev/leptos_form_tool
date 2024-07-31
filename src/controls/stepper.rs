@@ -11,12 +11,13 @@ use std::rc::Rc;
 pub struct StepperData {
     pub name: String,
     pub label: Option<String>,
-    pub step: Option<MaybeSignal<i32>>,
-    pub min: Option<MaybeSignal<i32>>,
-    pub max: Option<MaybeSignal<i32>>,
+    pub step: Option<MaybeSignal<String>>,
+    pub min: Option<MaybeSignal<String>>,
+    pub max: Option<MaybeSignal<String>>,
 }
 
 impl<FD: FormToolData> ControlData<FD> for StepperData {
+    /// String, as a user can still enter characters in a number fields.
     type ReturnType = String;
 
     fn render_control<FS: FormStyle>(
@@ -27,7 +28,7 @@ impl<FD: FormToolData> ControlData<FD> for StepperData {
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,
     ) -> View {
-        fs.stepper::<FD>(control, value_getter, value_setter, validation_state)
+        fs.stepper(control, value_getter, value_setter, validation_state)
     }
 }
 impl<FD: FormToolData> ValidatedControlData<FD> for StepperData {}
@@ -69,37 +70,37 @@ impl<FD: FormToolData, FDT> ControlBuilder<FD, StepperData, FDT> {
     }
 
     /// Sets the step ammount.
-    pub fn step(mut self, step: i32) -> Self {
-        self.data.step = Some(MaybeSignal::Static(step));
+    pub fn step(mut self, step: impl ToString) -> Self {
+        self.data.step = Some(MaybeSignal::Static(step.to_string()));
         self
     }
 
-    /// Sets the step ammount.
-    pub fn step_signal(mut self, step: Signal<i32>) -> Self {
+    /// Sets the step ammount to a signal.
+    pub fn step_signal(mut self, step: Signal<String>) -> Self {
         self.data.step = Some(MaybeSignal::Dynamic(step));
         self
     }
 
-    /// Sets the minimum value for the slider.
-    pub fn min(mut self, min: i32) -> Self {
-        self.data.min = Some(MaybeSignal::Static(min));
+    /// Sets the minimum value for the stepper.
+    pub fn min(mut self, min: impl ToString) -> Self {
+        self.data.min = Some(MaybeSignal::Static(min.to_string()));
         self
     }
 
-    /// Sets the minimum value for the slider to a signal.
-    pub fn min_signal(mut self, min: Signal<i32>) -> Self {
+    /// Sets the minimum value for the stepper to a signal.
+    pub fn min_signal(mut self, min: Signal<String>) -> Self {
         self.data.min = Some(MaybeSignal::Dynamic(min));
         self
     }
 
-    /// Sets the maximum value for the slider.
-    pub fn max(mut self, max: i32) -> Self {
-        self.data.max = Some(MaybeSignal::Static(max));
+    /// Sets the maximum value for the stepper.
+    pub fn max(mut self, max: impl ToString) -> Self {
+        self.data.max = Some(MaybeSignal::Static(max.to_string()));
         self
     }
 
-    /// Sets the maximum value for the slider to a signal.
-    pub fn max_signal(mut self, max: Signal<i32>) -> Self {
+    /// Sets the maximum value for the stepper to a signal.
+    pub fn max_signal(mut self, max: Signal<String>) -> Self {
         self.data.max = Some(MaybeSignal::Dynamic(max));
         self
     }
