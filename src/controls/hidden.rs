@@ -12,16 +12,17 @@ pub struct HiddenData {
     pub name: String,
 }
 
-impl VanityControlData for HiddenData {
-    fn build_control<FS: FormStyle>(
+impl<FD: FormToolData> VanityControlData<FD> for HiddenData {
+    fn render_control<FS: FormStyle>(
         fs: &FS,
+        _fd: leptos::prelude::RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Option<Signal<String>>,
     ) -> View {
         fs.hidden(control, value_getter)
     }
 }
-impl GetterVanityControlData for HiddenData {}
+impl<FD: FormToolData> GetterVanityControlData<FD> for HiddenData {}
 
 impl<FD: FormToolData> FormBuilder<FD> {
     /// Builds a hidden form control and adds it to the form.

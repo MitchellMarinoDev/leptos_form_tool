@@ -58,7 +58,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
     }
 
     /// Adds a new vanity control to the form.
-    pub(crate) fn new_vanity<C: VanityControlData + Default>(
+    pub(crate) fn new_vanity<C: VanityControlData<FD> + Default>(
         mut self,
         builder: impl BuilderFn<VanityControlBuilder<FD, C>>,
     ) -> Self {
@@ -69,7 +69,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
     }
 
     /// Adds a new vanity control to the form using the form's context.
-    pub(crate) fn new_vanity_cx<C: VanityControlData + Default>(
+    pub(crate) fn new_vanity_cx<C: VanityControlData<FD> + Default>(
         mut self,
         builder: impl BuilderCxFn<VanityControlBuilder<FD, C>, FD::Context>,
     ) -> Self {
@@ -80,7 +80,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
     }
 
     /// Adds a new control to the form using the form's context.
-    pub(crate) fn new_control<C: ControlData + Default, FDT: Clone + PartialEq + 'static>(
+    pub(crate) fn new_control<C: ControlData<FD> + Default, FDT: Clone + PartialEq + 'static>(
         mut self,
         builder: impl BuilderFn<ControlBuilder<FD, C, FDT>>,
     ) -> Self {
@@ -91,7 +91,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
     }
 
     /// Adds a new control to the form using the form's context.
-    pub(crate) fn new_control_cx<C: ControlData + Default, FDT: Clone + PartialEq + 'static>(
+    pub(crate) fn new_control_cx<C: ControlData<FD> + Default, FDT: Clone + PartialEq + 'static>(
         mut self,
         builder: impl BuilderCxFn<ControlBuilder<FD, C, FDT>, FD::Context>,
     ) -> Self {
@@ -102,7 +102,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
     }
 
     /// Adds a vanity control to the form.
-    pub(crate) fn add_vanity<C: VanityControlData>(
+    pub(crate) fn add_vanity<C: VanityControlData<FD>>(
         &mut self,
         vanity_control: VanityControlBuilder<FD, C>,
     ) {
@@ -116,8 +116,9 @@ impl<FD: FormToolData> FormBuilder<FD> {
         let render_fn = move |fs: Rc<FD::Style>, fd: RwSignal<FD>| {
             let render_data = Rc::new(render_data);
             let value_getter = getter.map(|getter| (move || getter(fd.get())).into_signal());
-            let view =
-                move || VanityControlData::build_control(&*fs, render_data.clone(), value_getter);
+            let view = move || {
+                VanityControlData::render_control(&*fs, fd, render_data.clone(), value_getter)
+            };
             let view = match show_when {
                 Some(when) => {
                     let when = move || when(fd.into(), cx.clone());
@@ -132,7 +133,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
     }
 
     /// Adds a control to the form.
-    pub(crate) fn add_control<C: ControlData, FDT: Clone + PartialEq + 'static>(
+    pub(crate) fn add_control<C: ControlData<FD>, FDT: Clone + PartialEq + 'static>(
         &mut self,
         control: ControlBuilder<FD, C, FDT>,
     ) {
@@ -178,7 +179,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
 
     /// Helper for building all the functions and everything needed to render
     /// the view.
-    fn build_control_view<C: ControlData, FDT: 'static>(
+    fn build_control_view<C: ControlData<FD>, FDT: 'static>(
         fd: RwSignal<FD>,
         fs: Rc<FD::Style>,
         control_data: BuiltControlData<FD, C, FDT>,
@@ -197,7 +198,8 @@ impl<FD: FormToolData> FormBuilder<FD> {
         let render_data = Rc::new(render_data);
         let (validation_signal, validation_signal_set) = create_signal(ValidationState::Passed);
         let validation_fn_clone = validation_fn.clone();
-        let (value_getter, value_setter) = create_signal(unparse_fn(getter(fd.get_untracked())));
+        let initial_value = unparse_fn(getter(fd.get_untracked()));
+        let (value_getter, value_setter) = create_signal(initial_value);
         create_effect(move |_| {
             fd.track();
             if validation_signal.get().is_parse_err() {
@@ -268,8 +270,9 @@ impl<FD: FormToolData> FormBuilder<FD> {
         );
 
         let view = move || {
-            C::build_control(
+            C::render_control(
                 &*fs,
+                fd,
                 render_data.clone(),
                 value_getter,
                 value_setter.clone(),

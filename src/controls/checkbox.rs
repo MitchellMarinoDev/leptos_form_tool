@@ -2,7 +2,7 @@ use super::{
     BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, ValidationState,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{Signal, SignalSetter, View};
+use leptos::{RwSignal, Signal, SignalSetter, View};
 use std::rc::Rc;
 
 /// Data used for the checkbox control.
@@ -12,11 +12,12 @@ pub struct CheckboxData {
     pub label: Option<String>,
 }
 
-impl ControlData for CheckboxData {
+impl<FD: FormToolData> ControlData<FD> for CheckboxData {
     type ReturnType = bool;
 
-    fn build_control<FS: FormStyle>(
+    fn render_control<FS: FormStyle>(
         fs: &FS,
+        _fd: RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,

@@ -3,7 +3,7 @@ use super::{
     ValidatedControlData, ValidationState,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{Signal, SignalSetter, View};
+use leptos::{RwSignal, Signal, SignalSetter, View};
 use std::rc::Rc;
 
 /// Data used for the text input control.
@@ -28,11 +28,12 @@ impl Default for TextInputData {
     }
 }
 
-impl ControlData for TextInputData {
+impl<FD: FormToolData> ControlData<FD> for TextInputData {
     type ReturnType = String;
 
-    fn build_control<FS: FormStyle>(
+    fn render_control<FS: FormStyle>(
         fs: &FS,
+        _fd: RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
@@ -41,7 +42,7 @@ impl ControlData for TextInputData {
         fs.text_input(control, value_getter, value_setter, validation_state)
     }
 }
-impl ValidatedControlData for TextInputData {}
+impl<FD: FormToolData> ValidatedControlData<FD> for TextInputData {}
 
 impl<FD: FormToolData> FormBuilder<FD> {
     /// Builds a text input control and adds it to the form.

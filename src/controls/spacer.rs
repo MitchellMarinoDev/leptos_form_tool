@@ -1,6 +1,6 @@
 use super::{BuilderCxFn, BuilderFn, ControlRenderData, VanityControlBuilder, VanityControlData};
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{prelude::Signal, View};
+use leptos::{prelude::Signal, RwSignal, View};
 use std::rc::Rc;
 
 /// Data used for the spacer control.
@@ -9,9 +9,10 @@ pub struct SpacerData {
     pub height: Option<String>,
 }
 
-impl VanityControlData for SpacerData {
-    fn build_control<FS: FormStyle>(
+impl<FD: FormToolData> VanityControlData<FD> for SpacerData {
+    fn render_control<FS: FormStyle>(
         fs: &FS,
+        _fd: RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         _value_getter: Option<Signal<String>>,
     ) -> View {

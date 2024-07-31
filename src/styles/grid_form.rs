@@ -1,13 +1,9 @@
 use super::FormStyle;
-use crate::{
-    controls::{
-        button::ButtonData, checkbox::CheckboxData, heading::HeadingData, hidden::HiddenData,
-        output::OutputData, radio_buttons::RadioButtonsData, select::SelectData,
-        slider::SliderData, spacer::SpacerData, stepper::StepperData, submit::SubmitData,
-        text_area::TextAreaData, text_input::TextInputData, ControlData, ControlRenderData,
-        UpdateEvent, ValidationState,
-    },
-    FormToolData,
+use crate::controls::{
+    button::ButtonData, checkbox::CheckboxData, heading::HeadingData, hidden::HiddenData,
+    output::OutputData, radio_buttons::RadioButtonsData, select::SelectData, slider::SliderData,
+    spacer::SpacerData, stepper::StepperData, submit::SubmitData, text_area::TextAreaData,
+    text_input::TextInputData, ControlRenderData, UpdateEvent, ValidationState,
 };
 use leptos::*;
 use std::rc::Rc;
@@ -105,16 +101,15 @@ impl FormStyle for GridFormStyle {
         )
     }
 
-    fn button<FD: FormToolData>(
+    fn button(
         &self,
-        control: Rc<ControlRenderData<Self, ButtonData<FD>>>,
-        data_signal: RwSignal<FD>,
+        control: Rc<ControlRenderData<Self, ButtonData>>,
         value_getter: Option<Signal<String>>,
     ) -> View {
         let action = control.data.action.clone();
         let on_click = move |ev: MouseEvent| {
-            if let Some(action) = action.clone() {
-                action(ev, data_signal)
+            if let Some(ref action) = action {
+                action(ev)
             }
         };
 
@@ -158,8 +153,8 @@ impl FormStyle for GridFormStyle {
     fn text_input(
         &self,
         control: Rc<ControlRenderData<Self, TextInputData>>,
-        value_getter: Signal<<TextInputData as ControlData>::ReturnType>,
-        value_setter: SignalSetter<<TextInputData as ControlData>::ReturnType>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
     ) -> View {
         let input = view! {
@@ -203,8 +198,8 @@ impl FormStyle for GridFormStyle {
     fn text_area(
         &self,
         control: Rc<ControlRenderData<Self, TextAreaData>>,
-        value_getter: Signal<<TextAreaData as ControlData>::ReturnType>,
-        value_setter: SignalSetter<<TextAreaData as ControlData>::ReturnType>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
     ) -> View {
         let input = view! {
@@ -248,8 +243,8 @@ impl FormStyle for GridFormStyle {
     fn radio_buttons(
         &self,
         control: Rc<ControlRenderData<Self, RadioButtonsData>>,
-        value_getter: Signal<<RadioButtonsData as ControlData>::ReturnType>,
-        value_setter: SignalSetter<<RadioButtonsData as ControlData>::ReturnType>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
     ) -> View {
         let buttons_view = control
@@ -305,8 +300,8 @@ impl FormStyle for GridFormStyle {
     fn select(
         &self,
         control: Rc<ControlRenderData<Self, SelectData>>,
-        value_getter: Signal<<SelectData as ControlData>::ReturnType>,
-        value_setter: SignalSetter<<SelectData as ControlData>::ReturnType>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
     ) -> View {
         let control_clone = control.clone();
@@ -364,8 +359,8 @@ impl FormStyle for GridFormStyle {
     fn checkbox(
         &self,
         control: Rc<ControlRenderData<Self, CheckboxData>>,
-        value_getter: Signal<<CheckboxData as ControlData>::ReturnType>,
-        value_setter: SignalSetter<<CheckboxData as ControlData>::ReturnType>,
+        value_getter: Signal<bool>,
+        value_setter: SignalSetter<bool>,
     ) -> View {
         let label = control
             .data
@@ -402,8 +397,8 @@ impl FormStyle for GridFormStyle {
     fn stepper(
         &self,
         control: Rc<ControlRenderData<Self, StepperData>>,
-        value_getter: Signal<<StepperData as ControlData>::ReturnType>,
-        value_setter: SignalSetter<<StepperData as ControlData>::ReturnType>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
     ) -> View {
         let view = view! {
@@ -417,9 +412,9 @@ impl FormStyle for GridFormStyle {
                 type="number"
                 id=&control.data.name
                 name=&control.data.name
-                step=control.data.step
-                min=control.data.min
-                max=control.data.max
+                step=control.data.step.clone()
+                min=control.data.min.clone()
+                max=control.data.max.clone()
                 class="form_input"
                 class=("form_input_invalid", move || validation_state.get().is_err())
                 prop:value=move || value_getter.get()
@@ -436,8 +431,8 @@ impl FormStyle for GridFormStyle {
     fn slider(
         &self,
         control: Rc<ControlRenderData<Self, SliderData>>,
-        value_getter: Signal<<SliderData as ControlData>::ReturnType>,
-        value_setter: SignalSetter<<SliderData as ControlData>::ReturnType>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
     ) -> View {
         let view = view! {
@@ -451,16 +446,14 @@ impl FormStyle for GridFormStyle {
                 type="range"
                 id=&control.data.name
                 name=&control.data.name
-                min=control.data.min
-                max=control.data.max
+                min=control.data.min.clone()
+                max=control.data.max.clone()
                 class="form_input"
                 class=("form_input_invalid", move || validation_state.get().is_err())
                 prop:value=move || value_getter.get()
                 on:input=move |ev| {
-                    let value = event_target_value(&ev).parse::<i32>().ok();
-                    if let Some(value) = value {
-                        value_setter.set(value);
-                    }
+                    let value = event_target_value(&ev);
+                    value_setter.set(value);
                 }
             />
         }

@@ -3,23 +3,24 @@ use super::{
     VanityControlData,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{Signal, View};
+use leptos::{RwSignal, Signal, View};
 use std::rc::Rc;
 
 /// Data used for the output control.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct OutputData;
 
-impl VanityControlData for OutputData {
-    fn build_control<FS: FormStyle>(
+impl<FD: FormToolData> VanityControlData<FD> for OutputData {
+    fn render_control<FS: FormStyle>(
         fs: &FS,
+        _fd: RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Option<Signal<String>>,
     ) -> View {
         fs.output(control, value_getter)
     }
 }
-impl GetterVanityControlData for OutputData {}
+impl<FD: FormToolData> GetterVanityControlData<FD> for OutputData {}
 
 impl<FD: FormToolData> FormBuilder<FD> {
     /// Builds an output form control and adds it to the form.

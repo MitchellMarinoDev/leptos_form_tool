@@ -109,31 +109,33 @@ pub enum UpdateEvent {
 }
 
 /// A trait for the data needed to render an read-only control.
-pub trait VanityControlData: 'static {
+pub trait VanityControlData<FD: FormToolData>: 'static {
     /// Builds the control, returning the [`View`] that was built.
-    fn build_control<FS: FormStyle>(
+    fn render_control<FS: FormStyle>(
         fs: &FS,
+        fd: RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Option<Signal<String>>,
     ) -> View;
 }
-pub trait GetterVanityControlData: VanityControlData {}
+pub trait GetterVanityControlData<FD: FormToolData>: VanityControlData<FD> {}
 
 /// A trait for the data needed to render an interactive control.
-pub trait ControlData: 'static {
-    /// This is the data type returned by this control.
+pub trait ControlData<FD: FormToolData>: 'static {
+    /// This is the data type returned by this control. Usually a [`String`].
     type ReturnType: Clone;
 
     /// Builds the control, returning the [`View`] that was built.
-    fn build_control<FS: FormStyle>(
+    fn render_control<FS: FormStyle>(
         fs: &FS,
+        fd: RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,
     ) -> View;
 }
-pub trait ValidatedControlData: ControlData {}
+pub trait ValidatedControlData<FD: FormToolData>: ControlData<FD> {}
 
 /// The data needed to render a interactive control of type `C`.
 pub struct ControlRenderData<FS: FormStyle + ?Sized, C: ?Sized> {
@@ -142,20 +144,20 @@ pub struct ControlRenderData<FS: FormStyle + ?Sized, C: ?Sized> {
 }
 
 /// The data needed to render a read-only control of type `C`.
-pub struct VanityControlBuilder<FD: FormToolData, C: VanityControlData> {
+pub struct VanityControlBuilder<FD: FormToolData, C: VanityControlData<FD>> {
     pub(crate) style_attributes: Vec<<FD::Style as FormStyle>::StylingAttributes>,
     pub(crate) data: C,
     pub(crate) getter: Option<Rc<dyn FieldGetter<FD, String>>>,
     pub(crate) show_when: Option<Box<dyn ShowWhenFn<FD, FD::Context>>>,
 }
 
-pub(crate) struct BuiltVanityControlData<FD: FormToolData, C: VanityControlData> {
+pub(crate) struct BuiltVanityControlData<FD: FormToolData, C: VanityControlData<FD>> {
     pub(crate) render_data: ControlRenderData<FD::Style, C>,
     pub(crate) getter: Option<Rc<dyn FieldGetter<FD, String>>>,
     pub(crate) show_when: Option<Box<dyn ShowWhenFn<FD, FD::Context>>>,
 }
 
-impl<FD: FormToolData, C: VanityControlData> VanityControlBuilder<FD, C> {
+impl<FD: FormToolData, C: VanityControlData<FD>> VanityControlBuilder<FD, C> {
     /// Creates a new [`VanityControlBuilder`] with the given [`VanityControlData`].
     pub(crate) fn new(data: C) -> Self {
         VanityControlBuilder {
@@ -196,7 +198,7 @@ impl<FD: FormToolData, C: VanityControlData> VanityControlBuilder<FD, C> {
     }
 }
 
-impl<FD: FormToolData, C: GetterVanityControlData> VanityControlBuilder<FD, C> {
+impl<FD: FormToolData, C: GetterVanityControlData<FD>> VanityControlBuilder<FD, C> {
     /// Sets the getter function.
     ///
     /// This function can get a string from the form data to be displayed
@@ -232,8 +234,8 @@ impl Display for ControlBuildError {
     }
 }
 
-/// The data returned fomr a control's build function.
-pub(crate) struct BuiltControlData<FD: FormToolData, C: ControlData, FDT> {
+/// The data returned from a control's build function.
+pub(crate) struct BuiltControlData<FD: FormToolData, C: ControlData<FD>, FDT> {
     pub(crate) render_data: ControlRenderData<FD::Style, C>,
     pub(crate) getter: Rc<dyn FieldGetter<FD, FDT>>,
     pub(crate) setter: Rc<dyn FieldSetter<FD, FDT>>,
@@ -244,7 +246,7 @@ pub(crate) struct BuiltControlData<FD: FormToolData, C: ControlData, FDT> {
 }
 
 /// A builder for a interactive control.
-pub struct ControlBuilder<FD: FormToolData, C: ControlData, FDT> {
+pub struct ControlBuilder<FD: FormToolData, C: ControlData<FD>, FDT> {
     pub(crate) getter: Option<Rc<dyn FieldGetter<FD, FDT>>>,
     pub(crate) setter: Option<Rc<dyn FieldSetter<FD, FDT>>>,
     pub(crate) parse_fn: Option<Box<dyn ParseFn<C::ReturnType, FDT>>>,
@@ -255,7 +257,7 @@ pub struct ControlBuilder<FD: FormToolData, C: ControlData, FDT> {
     pub data: C,
 }
 
-impl<FD: FormToolData, C: ControlData, FDT> ControlBuilder<FD, C, FDT> {
+impl<FD: FormToolData, C: ControlData<FD>, FDT> ControlBuilder<FD, C, FDT> {
     /// Creates a new [`ControlBuilder`] with the given [`ControlData`].
     pub(crate) fn new(data: C) -> Self {
         ControlBuilder {
@@ -363,10 +365,10 @@ impl<FD: FormToolData, C: ControlData, FDT> ControlBuilder<FD, C, FDT> {
 impl<FD, C, FDT> ControlBuilder<FD, C, FDT>
 where
     FD: FormToolData,
-    C: ControlData,
-    FDT: TryFrom<<C as ControlData>::ReturnType>,
-    <FDT as TryFrom<<C as ControlData>::ReturnType>>::Error: ToString,
-    <C as ControlData>::ReturnType: From<FDT>,
+    C: ControlData<FD>,
+    FDT: TryFrom<<C as ControlData<FD>>::ReturnType>,
+    <FDT as TryFrom<<C as ControlData<FD>>::ReturnType>>::Error: ToString,
+    <C as ControlData<FD>>::ReturnType: From<FDT>,
 {
     /// Sets the parse functions to use the [`TryFrom`] and [`From`] traits
     /// for parsing and unparsing respectively.
@@ -379,7 +381,7 @@ where
             FDT::try_from(control_return_value).map_err(|e| e.to_string())
         }));
         self.unparse_fn = Some(Box::new(|field| {
-            <C as ControlData>::ReturnType::from(field)
+            <C as ControlData<FD>>::ReturnType::from(field)
         }));
         self
     }
@@ -388,9 +390,9 @@ where
 impl<FD, C, FDT> ControlBuilder<FD, C, FDT>
 where
     FD: FormToolData,
-    C: ControlData,
-    FDT: TryFrom<<C as ControlData>::ReturnType>,
-    <C as ControlData>::ReturnType: From<FDT>,
+    C: ControlData<FD>,
+    FDT: TryFrom<<C as ControlData<FD>>::ReturnType>,
+    <C as ControlData<FD>>::ReturnType: From<FDT>,
 {
     /// Sets the parse functions to use the [`TryFrom`] and [`From`] traits
     /// for parsing and unparsing respectively, with a custom error message.
@@ -403,7 +405,7 @@ where
             FDT::try_from(control_return_value).map_err(|_| msg.to_string())
         }));
         self.unparse_fn = Some(Box::new(|field| {
-            <C as ControlData>::ReturnType::from(field)
+            <C as ControlData<FD>>::ReturnType::from(field)
         }));
         self
     }
@@ -412,7 +414,7 @@ where
 impl<FD, C, FDT> ControlBuilder<FD, C, FDT>
 where
     FD: FormToolData,
-    C: ControlData<ReturnType = String>,
+    C: ControlData<FD, ReturnType = String>,
     FDT: FromStr + ToString,
     <FDT as FromStr>::Err: ToString,
 {
@@ -494,7 +496,7 @@ where
 impl<FD, C, FDT> ControlBuilder<FD, C, Option<FDT>>
 where
     FD: FormToolData,
-    C: ControlData<ReturnType = String>,
+    C: ControlData<FD, ReturnType = String>,
     FDT: FromStr + ToString,
 {
     /// Sets the parse functions to use the [`FromStr`] [`ToString`] and traits
@@ -540,7 +542,7 @@ where
 impl<FD, C, FDT> ControlBuilder<FD, C, FDT>
 where
     FD: FormToolData,
-    C: ControlData<ReturnType = String>,
+    C: ControlData<FD, ReturnType = String>,
     FDT: FromStr + ToString + Default,
 {
     /// Sets the parse functions to use the [`FromStr`] [`ToString`] and traits
@@ -581,7 +583,7 @@ where
     }
 }
 
-impl<FD: FormToolData, C: ValidatedControlData, FDT> ControlBuilder<FD, C, FDT> {
+impl<FD: FormToolData, C: ValidatedControlData<FD>, FDT> ControlBuilder<FD, C, FDT> {
     /// Sets the validation function for this control
     ///
     /// This allows you to check if the parsed value is a valid value.
