@@ -22,7 +22,7 @@ struct HelloWorldFormData {
 
 ## Defining the Form Layout
 
-Then, to define how the for should be rendered, implement the `FormToolData`
+Then, to define how the form should be rendered, implement the `FormToolData`
 trait. You will need to define the style that this form will use and what
 context it will have.
 
@@ -31,9 +31,9 @@ add the StylingAttributes to the controls.
 
 The `build_form` method provides you with a `FormBuilder<Self>`. You can define
 controls on the form by using the builder methods. Some controls don't accept
-input from the user, they just display information. These are refered to as
+input from the user, they just display information. These are referred to as
 `VanityControls` by leptos_form_tool. An example of a vanity control would 
-be a heading. Other controls do accept user input and are just refered to as 
+be a heading. Other controls do accept user input and are just referred to as 
 `Controls` by leptos_form_tool.
 
 ### Defining Controls
@@ -44,20 +44,20 @@ that sets the placeholder of the text input.
 
 When building a control, you will need to provide a getter and setter
 to get the field and set the field on the form data. The getter is a function
-that takes the full form data, and returns the field. The setter is a function
-that takes the full form data and a value, and sets the field to that value.
-Examples for these getters and setters are shown below. 
+that takes the full form data and returns the field. The setter is a function
+that takes the full form data and a value and sets the field to that value.
+Examples of these getters and setters are shown below. 
 
-A VanityControl will never need a setter, as they only display information.
+VanityControls will never need a setter, as they only display information.
 Sometimes they need getters if the information they display is based on the 
-form data. For example, the output control can display information from the
+form data. For example, the `output` control can display information from the
 form data, so it needs a getter.
 
 #### Parse and Unparse Functions
 
 Controls also need a set of parse and unparse functions. The type that the
-control returns could be anything. For example, a range slider might return a
-`i32`, a text input might return a `String`. leptos_form_tool needs a way to 
+control returns could be anything. For example, a checkbox might return a
+`bool`, and a text input might return a `String`. leptos_form_tool needs a way to 
 convert the type of the field, to the type of the control and vice versa.
 This is what the un/parse functions are for.
 
@@ -82,9 +82,9 @@ allowed to fail; the FormData should always be able to be displayed.
 
 Validation functions can be defined on a field to add some extra criteria
 for what counts as a valid entry. The validation function takes the entire
-forms data. This allows you to use the entire state of the form to decide if
+form's data. This allows you to use the entire state of the form to decide if
 this field is valid or not. If any validation function fails, the form will
-not be allowed to submit. In addition, when you build a validator, it will
+not be allowed to be submitted. In addition, when you build a validator, it will
 collect all of the validation functions that you define on these fields.
 
 leptos_form_tool provides a `ValidationBuilder` to help you build validation
@@ -196,7 +196,7 @@ You might have noticed the goofy names that we put in our form above, like
 "data[first]" instead of just "first". This is done to allow the form to use
 the SubmitForm as an action. See 
 [ActionForms](https://book.leptos.dev/progressive_enhancement/action_form.html#complex-inputs)
-in the leptos book for more.
+in the Leptos book for more.
 
 ```rust
 #[component]
@@ -228,13 +228,19 @@ async fn submit_form(data: HelloWorldFormData) -> Result<String, ServerFnError> 
 }
 ```
 
-Lastly there is the `get_form` method. This almost identical to the ActionForm 
-version. In fact, if you do everything right, you wont even notice a
-difference. Under the hood, this sends your FormToolData struct directly
-by calling the server function, whereas the `ActionForm` version will try
-to construct your type using the 
+Lastly, there is the `get_form` method. This is almost identical to the ActionForm 
+version. In fact, if you do everything right, you won't even notice a
+difference. Under the hood, `get_form` serializes and sends your FormToolData 
+struct directly by calling the server function.
+`get_action_form`, on the other hand, will try to construct your FormToolData
+struct from the html form fields using the 
 [`FromFormData`](https://docs.rs/leptos_router/latest/leptos_router/trait.FromFormData.html)
-trait. Using the `get_form` method instead will allow you to name the inputs
-whatever you want (though you should try to name them correctly anyway to 
-support progressive enhancement) and it will still work. The example is the 
-same as above, just replace `get_action_form` with `get_form`.
+trait.
+
+Since the `get_form` method will directly serialize and send the form data,
+your form data needs to be `Serialize` and `Deserialize`. Since it doesn't
+use the `FromFormData` trait, you can name the inputs whatever you want and 
+it will still work (though you should try to name them correctly anyway to 
+support progressive enhancement). The example is the same as above, 
+just replace `get_action_form` with `get_form`, 
+and add the `Serialize` and `Deserialize` derives.
