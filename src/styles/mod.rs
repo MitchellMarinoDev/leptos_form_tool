@@ -1,15 +1,12 @@
 mod grid_form;
 
-use crate::{
-    controls::{
-        button::ButtonData, checkbox::CheckboxData, heading::HeadingData, hidden::HiddenData,
-        output::OutputData, radio_buttons::RadioButtonsData, select::SelectData,
-        slider::SliderData, spacer::SpacerData, stepper::StepperData, submit::SubmitData,
-        text_area::TextAreaData, text_input::TextInputData, ControlData, ControlRenderData,
-    },
-    FormToolData,
+use crate::controls::{
+    button::ButtonData, checkbox::CheckboxData, heading::HeadingData, hidden::HiddenData,
+    output::OutputData, radio_buttons::RadioButtonsData, select::SelectData, slider::SliderData,
+    spacer::SpacerData, stepper::StepperData, submit::SubmitData, text_area::TextAreaData,
+    text_input::TextInputData, ControlRenderData, ValidationState,
 };
-use leptos::{RwSignal, Signal, View};
+use leptos::{Signal, SignalSetter, View};
 use std::rc::Rc;
 
 pub use grid_form::{GFStyleAttr, GridFormStyle};
@@ -23,7 +20,7 @@ pub trait FormStyle: 'static {
     /// The type of styling attributes that this [`FormStyle`] takes.
     ///
     /// These styling attributes can be applied to any of the controls.
-    type StylingAttributes;
+    type StylingAttributes: Clone;
 
     /// Render any containing components for the form.
     ///
@@ -58,20 +55,28 @@ pub trait FormStyle: 'static {
     fn spacer(&self, control: Rc<ControlRenderData<Self, SpacerData>>) -> View;
 
     /// Renders a heading for a section of the form.
-    fn heading(&self, control: Rc<ControlRenderData<Self, HeadingData>>) -> View;
+    fn heading(
+        &self,
+        control: Rc<ControlRenderData<Self, HeadingData>>,
+        value_getter: Option<Signal<String>>,
+    ) -> View;
 
     /// Renders a submit button.
     ///
     /// See [`SubmitData`].
-    fn submit(&self, control: Rc<ControlRenderData<Self, SubmitData>>) -> View;
+    fn submit(
+        &self,
+        control: Rc<ControlRenderData<Self, SubmitData>>,
+        value_getter: Option<Signal<String>>,
+    ) -> View;
 
     /// Renders a button.
     ///
     /// See [`ButtonData`]
-    fn button<FD: FormToolData>(
+    fn button(
         &self,
-        control: Rc<ControlRenderData<Self, ButtonData<FD>>>,
-        data_signal: RwSignal<FD>,
+        control: Rc<ControlRenderData<Self, ButtonData>>,
+        value_getter: Option<Signal<String>>,
     ) -> View;
 
     /// Renders some output text.
@@ -98,9 +103,9 @@ pub trait FormStyle: 'static {
     fn text_input(
         &self,
         control: Rc<ControlRenderData<Self, TextInputData>>,
-        value_getter: Signal<<TextInputData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<TextInputData as ControlData>::ReturnType)>,
-        validation_state: Signal<Result<(), String>>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
+        validation_state: Signal<ValidationState>,
     ) -> View;
 
     /// Renders a text area control.
@@ -109,9 +114,9 @@ pub trait FormStyle: 'static {
     fn text_area(
         &self,
         control: Rc<ControlRenderData<Self, TextAreaData>>,
-        value_getter: Signal<<TextAreaData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<TextAreaData as ControlData>::ReturnType)>,
-        validation_state: Signal<Result<(), String>>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
+        validation_state: Signal<ValidationState>,
     ) -> View;
 
     /// Renders a group of radio buttons.
@@ -120,9 +125,9 @@ pub trait FormStyle: 'static {
     fn radio_buttons(
         &self,
         control: Rc<ControlRenderData<Self, RadioButtonsData>>,
-        value_getter: Signal<<RadioButtonsData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<RadioButtonsData as ControlData>::ReturnType)>,
-        validation_state: Signal<Result<(), String>>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
+        validation_state: Signal<ValidationState>,
     ) -> View;
 
     /// Renders a select (or dropdown) control.
@@ -131,9 +136,9 @@ pub trait FormStyle: 'static {
     fn select(
         &self,
         control: Rc<ControlRenderData<Self, SelectData>>,
-        value_getter: Signal<<SelectData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<SelectData as ControlData>::ReturnType)>,
-        validation_state: Signal<Result<(), String>>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
+        validation_state: Signal<ValidationState>,
     ) -> View;
 
     /// Renders a checkbox control.
@@ -142,8 +147,8 @@ pub trait FormStyle: 'static {
     fn checkbox(
         &self,
         control: Rc<ControlRenderData<Self, CheckboxData>>,
-        value_getter: Signal<<CheckboxData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<CheckboxData as ControlData>::ReturnType)>,
+        value_getter: Signal<bool>,
+        value_setter: SignalSetter<bool>,
     ) -> View;
 
     /// Renders a stepper control.
@@ -152,9 +157,9 @@ pub trait FormStyle: 'static {
     fn stepper(
         &self,
         control: Rc<ControlRenderData<Self, StepperData>>,
-        value_getter: Signal<<StepperData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<StepperData as ControlData>::ReturnType)>,
-        validation_state: Signal<Result<(), String>>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
+        validation_state: Signal<ValidationState>,
     ) -> View;
 
     /// Renders a slider control.
@@ -163,8 +168,8 @@ pub trait FormStyle: 'static {
     fn slider(
         &self,
         control: Rc<ControlRenderData<Self, SliderData>>,
-        value_getter: Signal<<SliderData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<SliderData as ControlData>::ReturnType)>,
-        validation_state: Signal<Result<(), String>>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
+        validation_state: Signal<ValidationState>,
     ) -> View;
 }

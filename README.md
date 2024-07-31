@@ -3,13 +3,13 @@
 [![crates.io](https://img.shields.io/crates/v/leptos_form_tool)](https://crates.io/crates/leptos_form_tool)
 [![docs.rs](https://docs.rs/leptos_form_tool/badge.svg)](https://docs.rs/leptos_form_tool)
 
-A declaritive way to create forms for [leptos](https://leptos.dev/).
+A declarative way to create forms for [leptos](https://leptos.dev/).
 
-leptos_form_tool allows you to define forms in a declaritive way.
-Want text box? Just call `.text_input` on the form builder. Then sepperatly,
+leptos_form_tool allows you to define forms in a declarative way.
+Want a text box? Just call `.text_input` on the form builder. Then, separately,
 you define a FormStyle to specify how that text box should be rendered.
-This has a number of advantages:
- - Sepperates the layout of the form from how it is rendered and styled
+This has several advantages:
+ - Separates the layout of the form from how it is rendered and styled
  - Allows different styles to be swapped in and out quickly
 
 ## Validations
@@ -18,11 +18,11 @@ You might find yourself asking, but why not just use components?
 
 The biggest reason for creating leptos_form_tool is support for
 validating the fields. This validation logic can get rather complex, for
-instance, you likely want to preform validation on the client when the user 
-clicks submit to immediatly give the user feedback about any invalid input.
+instance, you likely want to perform validation on the client when the user 
+clicks submit to immediately give the user feedback about any invalid input.
 But you often also want to do the same validation on the server to protect
 against any requests that don't come from your client or for a user that
-doesn't have wasm enabled.
+doesn't have WASM enabled.
 
 Additionally, you might want to change the validation of one control based
 on the value of another. For example, you might want to make sure the "day"
@@ -38,65 +38,65 @@ lepos_form_tool takes care of all this for you.
 
 ## FormStyle
 
-To define how to render all the components that a form might use, you define
+To define how to render all the components a form might use, you define
 a type that implements the `FormStyle` trait. This trait has a method for each
-control that the form might need to render. Once you implement that trait you
-just need to change the `Style` associated trait of your form to use that new
-style.
+control that the form might need to render. To use this new style, you
+just need to change the `Style` associated trait of your form to your new type.
 
-Its actually a little more complicated than that...
+It's actually a little more complicated than that...
 
 To give custom styles a little more freedom to configure how to render their
-controls on a per-control-basis, the style will define an associated type 
+controls on a per-control basis, the style will define an associated type 
 (usually an enum) called `StylingAttributes`. A styling attribute can be added
 to a control by calling `.style(/* style */)` on the control builder. These 
-styling attributes are accessable to the `FormStyle` implementation when 
+styling attributes are accessible to the `FormStyle` implementation when 
 rendering that control.
 
-Therefore, swaping out styles also requires swapping out all the `.style()`
-calls.
+Therefore, swapping out styles also requires swapping out all the `.style()` calls.
 
 ## Builders
 
 leptos_form_tool makes heavy use of the builder pattern. You will build the
-form, controls and sometimes even validation functions by calling methods on
-a builder that will construct the object based on the values you give it.
+form, controls, and sometimes even validation functions by calling methods on
+a builder that constructs the object based on the values you give it.
 
 ## Context
 
 Sometimes, you might want to be able to use something from the form's context
-to render the form. For example, you may want to use a user's token as context
-and only render part of the form if they are an administrator. Or, you may
+to render the form. For example, you may want to use a user's token as context,
+to only render part of the form if they are an administrator. Or, you may
 need to get the options for a certain drop-down dynamically. The form's context
 is the solution to these problems.
 
-On the form, you define the associated type `Context`. Then, when you construct
-the `Form` object, you must provide the context. The context can be used in
-the building of the form, and can change what is rendered. Each control
-builder function has a context varient that allows you to use the context in
-the building of the form.
+On the form, you define the associated type `Context`. Then, any time you construct
+a `Form`, you must provide that context. The context can be used in
+the building of the form and can change what controls are rendered. Each control
+builder function (ex. `.text_input()`) has a context variant 
+(ex. `.text_input_cx()`) that allows you to use the context
+for building that control.
 
-To avoid a whole lot of headache, the context is immutable once passed into to
-the form. However, you can have leptos signals in the context, as they dont
-require mutable access to call get/set on the signal.
+To avoid a whole lot of headaches, the context is immutable once passed into
+the form. However, you can use leptos signals in the context just fine, as you don't
+need mutable access to call get/set on the signal.
 
 Since the context can change how the form is rendered, and what controls are
 shown/hidden (thus changing what controls are validated), the context is
-needed to validate the form data on the server side. If are sure that the
-context doesn't change any of the validations, you don't have to make sure
-the context is the same on client and server. If the context does change
-how the form is validated, make sure to keep the context the same to maximize
-the validation that can happen on the clients side, before the user even
-submits the form.
+needed to validate the form data on the server side. In general, when 
+validating the form on the server, you should pass the same context as 
+you did on the client, to make sure the validation logic is the same. 
+If you are sure that changing the context won't change any of the validations, 
+it is ok to use different contexts on the server and client. 
+
+It is important to note that for controls that are not shown 
+(the `.show_when(/* condition */)` condition evaluates to `false`), 
+the validation for that field does not run.
 
 ## Custom Components
 
 leptos_form_tool also supports custom components that can be defined in the
-user space. Though less ergonomic, this keeps leptos_form_tool from putting
+user space. This keeps leptos_form_tool from putting
 limits on what you can do. There are `custom_*` methods on the form builder
-that allow you to add your component. Unfortunatly you cannot define methods
-on the `ControlBuilder` to help build your controls data, so you must 
-construct the ControlData for your custom type before adding it to the form.
+that allow you to add your component.
 
 ## Getting Started
 
@@ -110,6 +110,7 @@ To follow a Getting Started guide, see [`getting_started.md`].
 | form_tool version | leptos version |
 |-------------------|----------------|
 | 0.1.0             | 0.6            |
+| 0.2.0             | 0.6            |
 
 ## Contributing
 

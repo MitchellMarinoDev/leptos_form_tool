@@ -1,8 +1,9 @@
 use super::{
     BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, ValidatedControlData,
+    ValidationState,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{Signal, View};
+use leptos::{RwSignal, Signal, SignalSetter, View};
 use std::rc::Rc;
 
 /// Data used for the radio buttons control.
@@ -16,20 +17,21 @@ pub struct RadioButtonsData {
     pub options: Vec<(String, String)>,
 }
 
-impl ControlData for RadioButtonsData {
+impl<FD: FormToolData> ControlData<FD> for RadioButtonsData {
     type ReturnType = String;
 
-    fn build_control<FS: FormStyle>(
+    fn render_control<FS: FormStyle>(
         fs: &FS,
+        _fd: RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
-        value_setter: Rc<dyn Fn(Self::ReturnType)>,
-        validation_state: Signal<Result<(), String>>,
+        value_setter: SignalSetter<Self::ReturnType>,
+        validation_state: Signal<ValidationState>,
     ) -> View {
         fs.radio_buttons(control, value_getter, value_setter, validation_state)
     }
 }
-impl ValidatedControlData for RadioButtonsData {}
+impl<FD: FormToolData> ValidatedControlData<FD> for RadioButtonsData {}
 
 impl<FD: FormToolData> FormBuilder<FD> {
     /// Builds a radio buttons control and adds it to the form.

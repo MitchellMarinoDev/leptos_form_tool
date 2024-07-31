@@ -65,6 +65,20 @@ impl<FD: FormToolData, T: ?Sized + 'static> ValidationBuilder<FD, T> {
     }
 }
 
+impl<FD: FormToolData, T> ValidationBuilder<FD, Option<T>> {
+    /// Requires the field to be `Some`.
+    pub fn required(mut self) -> Self {
+        self.functions.push(Box::new(move |name, value| {
+            if value.is_none() {
+                Err(format!("{} is required", name))
+            } else {
+                Ok(())
+            }
+        }));
+        self
+    }
+}
+
 impl<FD: FormToolData> ValidationBuilder<FD, str> {
     /// Requires the field to not be empty.
     pub fn required(mut self) -> Self {

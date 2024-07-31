@@ -1,8 +1,9 @@
 use super::{
-    BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, ValidatedControlData,
+    BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, UpdateEvent,
+    ValidatedControlData, ValidationState,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{Signal, View};
+use leptos::{RwSignal, Signal, SignalSetter, View};
 use std::rc::Rc;
 
 /// Data used for the text input control.
@@ -12,6 +13,7 @@ pub struct TextInputData {
     pub label: Option<String>,
     pub placeholder: Option<String>,
     pub input_type: &'static str,
+    pub update_event: UpdateEvent,
 }
 
 impl Default for TextInputData {
@@ -21,24 +23,26 @@ impl Default for TextInputData {
             placeholder: None,
             label: None,
             input_type: "input",
+            update_event: UpdateEvent::default(),
         }
     }
 }
 
-impl ControlData for TextInputData {
+impl<FD: FormToolData> ControlData<FD> for TextInputData {
     type ReturnType = String;
 
-    fn build_control<FS: FormStyle>(
+    fn render_control<FS: FormStyle>(
         fs: &FS,
+        _fd: RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
-        value_setter: Rc<dyn Fn(Self::ReturnType)>,
-        validation_state: Signal<Result<(), String>>,
+        value_setter: SignalSetter<Self::ReturnType>,
+        validation_state: Signal<ValidationState>,
     ) -> View {
         fs.text_input(control, value_getter, value_setter, validation_state)
     }
 }
-impl ValidatedControlData for TextInputData {}
+impl<FD: FormToolData> ValidatedControlData<FD> for TextInputData {}
 
 impl<FD: FormToolData> FormBuilder<FD> {
     /// Builds a text input control and adds it to the form.
@@ -97,6 +101,12 @@ impl<FD: FormToolData, FDT> ControlBuilder<FD, TextInputData, FDT> {
     /// Sets the text input to be the specified type.
     pub fn input_type(mut self, input_type: &'static str) -> Self {
         self.data.input_type = input_type;
+        self
+    }
+
+    /// Sets the event that is used to update the form data.
+    pub fn update_on(mut self, event: UpdateEvent) -> Self {
+        self.data.update_event = event;
         self
     }
 }

@@ -1,5 +1,5 @@
 use crate::{form::FormToolData, styles::FormStyle};
-use leptos::{RwSignal, Signal, View};
+use leptos::{RwSignal, Signal, SignalSetter, View};
 use std::{fmt::Display, rc::Rc, str::FromStr};
 
 pub mod button;
@@ -47,32 +47,95 @@ impl<FS, FD: 'static, F> RenderFn<FS, FD> for F where
 {
 }
 
+/// The possible states for a validated control
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub enum ValidationState {
+    /// Parsing and validation passed. No errors
+    #[default]
+    Passed,
+    /// Error when parsing the field.
+    ParseError(String),
+    /// Error when validating the field.
+    ValidationError(String),
+}
+impl ValidationState {
+    /// Gets the error message if there is a parse or validation error.
+    pub fn msg(&self) -> Option<&String> {
+        match self {
+            ValidationState::Passed => None,
+            ValidationState::ParseError(e) => Some(e),
+            ValidationState::ValidationError(e) => Some(e),
+        }
+    }
+    /// Takes the error message if there is a parse or validation error.
+    pub fn take_msg(self) -> Option<String> {
+        match self {
+            ValidationState::Passed => None,
+            ValidationState::ParseError(e) => Some(e),
+            ValidationState::ValidationError(e) => Some(e),
+        }
+    }
+
+    /// Returns true if self is `Passed`.
+    pub fn is_passed(&self) -> bool {
+        matches!(self, ValidationState::Passed)
+    }
+    /// Returns true if self is either `ParseError` or `ValidationError`.
+    pub fn is_err(&self) -> bool {
+        matches!(
+            self,
+            ValidationState::ParseError(_) | ValidationState::ValidationError(_)
+        )
+    }
+
+    /// Returns true if self is `ParseError`.
+    pub fn is_parse_err(&self) -> bool {
+        matches!(self, ValidationState::ParseError(_))
+    }
+
+    /// Returns true if self is `ValidationError`.
+    pub fn is_validation_err(&self) -> bool {
+        matches!(self, ValidationState::ValidationError(_))
+    }
+}
+
+/// The possibilities for when a control updates the form data.
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
+pub enum UpdateEvent {
+    #[default]
+    OnFocusout,
+    OnInput,
+    OnChange,
+}
+
 /// A trait for the data needed to render an read-only control.
-pub trait VanityControlData: 'static {
+pub trait VanityControlData<FD: FormToolData>: 'static {
     /// Builds the control, returning the [`View`] that was built.
-    fn build_control<FS: FormStyle>(
+    fn render_control<FS: FormStyle>(
         fs: &FS,
+        fd: RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Option<Signal<String>>,
     ) -> View;
 }
-pub trait GetterVanityControlData: VanityControlData {}
+pub trait GetterVanityControlData<FD: FormToolData>: VanityControlData<FD> {}
 
 /// A trait for the data needed to render an interactive control.
-pub trait ControlData: 'static {
-    /// This is the data type returned by this control.
+pub trait ControlData<FD: FormToolData>: 'static {
+    /// This is the data type returned by this control. Usually a [`String`].
     type ReturnType: Clone;
 
     /// Builds the control, returning the [`View`] that was built.
-    fn build_control<FS: FormStyle>(
+    fn render_control<FS: FormStyle>(
         fs: &FS,
+        fd: RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
-        value_setter: Rc<dyn Fn(Self::ReturnType)>,
-        validation_state: Signal<Result<(), String>>,
+        value_setter: SignalSetter<Self::ReturnType>,
+        validation_state: Signal<ValidationState>,
     ) -> View;
 }
-pub trait ValidatedControlData: ControlData {}
+pub trait ValidatedControlData<FD: FormToolData>: ControlData<FD> {}
 
 /// The data needed to render a interactive control of type `C`.
 pub struct ControlRenderData<FS: FormStyle + ?Sized, C: ?Sized> {
@@ -81,20 +144,20 @@ pub struct ControlRenderData<FS: FormStyle + ?Sized, C: ?Sized> {
 }
 
 /// The data needed to render a read-only control of type `C`.
-pub struct VanityControlBuilder<FD: FormToolData, C: VanityControlData> {
+pub struct VanityControlBuilder<FD: FormToolData, C: VanityControlData<FD>> {
     pub(crate) style_attributes: Vec<<FD::Style as FormStyle>::StylingAttributes>,
     pub(crate) data: C,
     pub(crate) getter: Option<Rc<dyn FieldGetter<FD, String>>>,
     pub(crate) show_when: Option<Box<dyn ShowWhenFn<FD, FD::Context>>>,
 }
 
-pub(crate) struct BuiltVanityControlData<FD: FormToolData, C: VanityControlData> {
+pub(crate) struct BuiltVanityControlData<FD: FormToolData, C: VanityControlData<FD>> {
     pub(crate) render_data: ControlRenderData<FD::Style, C>,
     pub(crate) getter: Option<Rc<dyn FieldGetter<FD, String>>>,
     pub(crate) show_when: Option<Box<dyn ShowWhenFn<FD, FD::Context>>>,
 }
 
-impl<FD: FormToolData, C: VanityControlData> VanityControlBuilder<FD, C> {
+impl<FD: FormToolData, C: VanityControlData<FD>> VanityControlBuilder<FD, C> {
     /// Creates a new [`VanityControlBuilder`] with the given [`VanityControlData`].
     pub(crate) fn new(data: C) -> Self {
         VanityControlBuilder {
@@ -135,7 +198,7 @@ impl<FD: FormToolData, C: VanityControlData> VanityControlBuilder<FD, C> {
     }
 }
 
-impl<FD: FormToolData, C: GetterVanityControlData> VanityControlBuilder<FD, C> {
+impl<FD: FormToolData, C: GetterVanityControlData<FD>> VanityControlBuilder<FD, C> {
     /// Sets the getter function.
     ///
     /// This function can get a string from the form data to be displayed
@@ -171,8 +234,8 @@ impl Display for ControlBuildError {
     }
 }
 
-/// The data returned fomr a control's build function.
-pub(crate) struct BuiltControlData<FD: FormToolData, C: ControlData, FDT> {
+/// The data returned from a control's build function.
+pub(crate) struct BuiltControlData<FD: FormToolData, C: ControlData<FD>, FDT> {
     pub(crate) render_data: ControlRenderData<FD::Style, C>,
     pub(crate) getter: Rc<dyn FieldGetter<FD, FDT>>,
     pub(crate) setter: Rc<dyn FieldSetter<FD, FDT>>,
@@ -183,7 +246,7 @@ pub(crate) struct BuiltControlData<FD: FormToolData, C: ControlData, FDT> {
 }
 
 /// A builder for a interactive control.
-pub struct ControlBuilder<FD: FormToolData, C: ControlData, FDT> {
+pub struct ControlBuilder<FD: FormToolData, C: ControlData<FD>, FDT> {
     pub(crate) getter: Option<Rc<dyn FieldGetter<FD, FDT>>>,
     pub(crate) setter: Option<Rc<dyn FieldSetter<FD, FDT>>>,
     pub(crate) parse_fn: Option<Box<dyn ParseFn<C::ReturnType, FDT>>>,
@@ -194,7 +257,7 @@ pub struct ControlBuilder<FD: FormToolData, C: ControlData, FDT> {
     pub data: C,
 }
 
-impl<FD: FormToolData, C: ControlData, FDT> ControlBuilder<FD, C, FDT> {
+impl<FD: FormToolData, C: ControlData<FD>, FDT> ControlBuilder<FD, C, FDT> {
     /// Creates a new [`ControlBuilder`] with the given [`ControlData`].
     pub(crate) fn new(data: C) -> Self {
         ControlBuilder {
@@ -302,10 +365,10 @@ impl<FD: FormToolData, C: ControlData, FDT> ControlBuilder<FD, C, FDT> {
 impl<FD, C, FDT> ControlBuilder<FD, C, FDT>
 where
     FD: FormToolData,
-    C: ControlData,
-    FDT: TryFrom<<C as ControlData>::ReturnType>,
-    <FDT as TryFrom<<C as ControlData>::ReturnType>>::Error: ToString,
-    <C as ControlData>::ReturnType: From<FDT>,
+    C: ControlData<FD>,
+    FDT: TryFrom<<C as ControlData<FD>>::ReturnType>,
+    <FDT as TryFrom<<C as ControlData<FD>>::ReturnType>>::Error: ToString,
+    <C as ControlData<FD>>::ReturnType: From<FDT>,
 {
     /// Sets the parse functions to use the [`TryFrom`] and [`From`] traits
     /// for parsing and unparsing respectively.
@@ -318,7 +381,7 @@ where
             FDT::try_from(control_return_value).map_err(|e| e.to_string())
         }));
         self.unparse_fn = Some(Box::new(|field| {
-            <C as ControlData>::ReturnType::from(field)
+            <C as ControlData<FD>>::ReturnType::from(field)
         }));
         self
     }
@@ -327,7 +390,31 @@ where
 impl<FD, C, FDT> ControlBuilder<FD, C, FDT>
 where
     FD: FormToolData,
-    C: ControlData<ReturnType = String>,
+    C: ControlData<FD>,
+    FDT: TryFrom<<C as ControlData<FD>>::ReturnType>,
+    <C as ControlData<FD>>::ReturnType: From<FDT>,
+{
+    /// Sets the parse functions to use the [`TryFrom`] and [`From`] traits
+    /// for parsing and unparsing respectively, with a custom error message.
+    ///
+    /// The parse and unparse functions define how to turn what the user
+    /// types in the form into what is stored in the form data struct and
+    /// vice versa.
+    pub fn parse_from_msg(mut self, msg: impl ToString + 'static) -> Self {
+        self.parse_fn = Some(Box::new(move |control_return_value| {
+            FDT::try_from(control_return_value).map_err(|_| msg.to_string())
+        }));
+        self.unparse_fn = Some(Box::new(|field| {
+            <C as ControlData<FD>>::ReturnType::from(field)
+        }));
+        self
+    }
+}
+
+impl<FD, C, FDT> ControlBuilder<FD, C, FDT>
+where
+    FD: FormToolData,
+    C: ControlData<FD, ReturnType = String>,
     FDT: FromStr + ToString,
     <FDT as FromStr>::Err: ToString,
 {
@@ -366,9 +453,137 @@ where
         self.unparse_fn = Some(Box::new(|field| field.to_string()));
         self
     }
+
+    /// Sets the parse functions to use the [`FromStr`] [`ToString`] and
+    /// traits. Similar to [`parse_string`](Self::parse_string).
+    ///
+    /// The message passed in is the error message.
+    ///
+    /// The parse and unparse functions define how to turn what the user
+    /// types in the form into what is stored in the form data struct and
+    /// vice versa.
+    pub fn parse_string_msg(mut self, msg: impl ToString + 'static) -> Self {
+        self.parse_fn = Some(Box::new(move |control_return_value| {
+            control_return_value
+                .parse::<FDT>()
+                .map_err(|_| msg.to_string())
+        }));
+        self.unparse_fn = Some(Box::new(|field| field.to_string()));
+        self
+    }
+
+    /// Sets the parse functions to use the [`FromStr`] [`ToString`] and
+    /// traits, trimming beforehand. Similar to
+    /// [`parse_trimmed`](Self::parse_trimmed).
+    ///
+    /// The message passed in is the error message.
+    ///
+    /// The parse and unparse functions define how to turn what the user
+    /// types in the form into what is stored in the form data struct and
+    /// vice versa.
+    pub fn parse_trimmed_msg(mut self, msg: impl ToString + 'static) -> Self {
+        self.parse_fn = Some(Box::new(move |control_return_value| {
+            control_return_value
+                .trim()
+                .parse::<FDT>()
+                .map_err(|_| msg.to_string())
+        }));
+        self.unparse_fn = Some(Box::new(|field| field.to_string()));
+        self
+    }
 }
 
-impl<FD: FormToolData, C: ValidatedControlData, FDT> ControlBuilder<FD, C, FDT> {
+impl<FD, C, FDT> ControlBuilder<FD, C, Option<FDT>>
+where
+    FD: FormToolData,
+    C: ControlData<FD, ReturnType = String>,
+    FDT: FromStr + ToString,
+{
+    /// Sets the parse functions to use the [`FromStr`] [`ToString`] and traits
+    /// on on optional value for parsing and unparsing respectively.
+    /// If parsing fails, the `None` varient will be passed, otherwise, if
+    /// parsing succeeds, `Some(value)` will be passed.
+    ///
+    /// To trim the string before parsing, see
+    /// [`parse_optional_trimmed`](Self::parse_optional_trimmed)().
+    ///
+    /// The parse and unparse functions define how to turn what the user
+    /// types in the form into what is stored in the form data struct and
+    /// vice versa.
+    pub fn parse_optional(mut self) -> Self {
+        self.parse_fn = Some(Box::new(|control_return_value| {
+            Ok(control_return_value.parse::<FDT>().ok())
+        }));
+        self.unparse_fn = Some(Box::new(|field| {
+            field.map(|v| v.to_string()).unwrap_or_default()
+        }));
+        self
+    }
+
+    /// Sets the parse functions to use the [`FromStr`] [`ToString`] and traits
+    /// on on optional value for parsing and unparsing respectively, similar
+    /// to [`parse_optional`](Self::parse_optional)().
+    /// However, this method trims the string before parsing.
+    ///
+    /// The parse and unparse functions define how to turn what the user
+    /// types in the form into what is stored in the form data struct and
+    /// vice versa.
+    pub fn parse_optional_trimmed(mut self) -> Self {
+        self.parse_fn = Some(Box::new(|control_return_value| {
+            Ok(control_return_value.trim().parse::<FDT>().ok())
+        }));
+        self.unparse_fn = Some(Box::new(|field| {
+            field.map(|v| v.to_string()).unwrap_or_default()
+        }));
+        self
+    }
+}
+
+impl<FD, C, FDT> ControlBuilder<FD, C, FDT>
+where
+    FD: FormToolData,
+    C: ControlData<FD, ReturnType = String>,
+    FDT: FromStr + ToString + Default,
+{
+    /// Sets the parse functions to use the [`FromStr`] [`ToString`] and traits
+    /// for parsing and unparsing respectively.
+    /// If parsing fails, the default value will be used.
+    ///
+    /// To trim the string before parsing, see
+    /// [`parse_trimmed_or_default`](Self::parse_trimmed_or_default)().
+    ///
+    /// The parse and unparse functions define how to turn what the user
+    /// types in the form into what is stored in the form data struct and
+    /// vice versa.
+    pub fn parse_or_default(mut self) -> Self {
+        self.parse_fn = Some(Box::new(|control_return_value| {
+            Ok(control_return_value.parse::<FDT>().unwrap_or_default())
+        }));
+        self.unparse_fn = Some(Box::new(|field| field.to_string()));
+        self
+    }
+
+    /// Sets the parse functions to use the [`FromStr`] [`ToString`] and traits
+    /// on on optional value for parsing and unparsing respectively, similar
+    /// to [`parse_or_default`](Self::parse_or_default)().
+    /// However, this method trims the string before parsing.
+    ///
+    /// The parse and unparse functions define how to turn what the user
+    /// types in the form into what is stored in the form data struct and
+    /// vice versa.
+    pub fn parse_trimmed_or_default(mut self) -> Self {
+        self.parse_fn = Some(Box::new(|control_return_value| {
+            Ok(control_return_value
+                .trim()
+                .parse::<FDT>()
+                .unwrap_or_default())
+        }));
+        self.unparse_fn = Some(Box::new(|field| field.to_string()));
+        self
+    }
+}
+
+impl<FD: FormToolData, C: ValidatedControlData<FD>, FDT> ControlBuilder<FD, C, FDT> {
     /// Sets the validation function for this control
     ///
     /// This allows you to check if the parsed value is a valid value.

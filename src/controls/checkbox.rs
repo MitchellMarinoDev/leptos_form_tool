@@ -1,6 +1,8 @@
-use super::{BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData};
+use super::{
+    BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, ValidationState,
+};
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{Signal, View};
+use leptos::{RwSignal, Signal, SignalSetter, View};
 use std::rc::Rc;
 
 /// Data used for the checkbox control.
@@ -10,15 +12,16 @@ pub struct CheckboxData {
     pub label: Option<String>,
 }
 
-impl ControlData for CheckboxData {
+impl<FD: FormToolData> ControlData<FD> for CheckboxData {
     type ReturnType = bool;
 
-    fn build_control<FS: FormStyle>(
+    fn render_control<FS: FormStyle>(
         fs: &FS,
+        _fd: RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
-        value_setter: Rc<dyn Fn(Self::ReturnType)>,
-        _validation_state: Signal<Result<(), String>>,
+        value_setter: SignalSetter<Self::ReturnType>,
+        _validation_state: Signal<ValidationState>,
     ) -> View {
         fs.checkbox(control, value_getter, value_setter)
     }

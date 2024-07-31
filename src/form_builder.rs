@@ -2,7 +2,7 @@ use crate::{
     controls::{
         BuilderCxFn, BuilderFn, BuiltControlData, BuiltVanityControlData, ControlBuilder,
         ControlData, ControlRenderData, FieldSetter, ParseFn, RenderFn, ValidationCb, ValidationFn,
-        VanityControlBuilder, VanityControlData,
+        ValidationState, VanityControlBuilder, VanityControlData,
     },
     form::{Form, FormToolData, FormValidator},
     styles::FormStyle,
@@ -58,7 +58,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
     }
 
     /// Adds a new vanity control to the form.
-    pub(crate) fn new_vanity<C: VanityControlData + Default>(
+    pub(crate) fn new_vanity<C: VanityControlData<FD> + Default>(
         mut self,
         builder: impl BuilderFn<VanityControlBuilder<FD, C>>,
     ) -> Self {
@@ -69,7 +69,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
     }
 
     /// Adds a new vanity control to the form using the form's context.
-    pub(crate) fn new_vanity_cx<C: VanityControlData + Default>(
+    pub(crate) fn new_vanity_cx<C: VanityControlData<FD> + Default>(
         mut self,
         builder: impl BuilderCxFn<VanityControlBuilder<FD, C>, FD::Context>,
     ) -> Self {
@@ -80,7 +80,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
     }
 
     /// Adds a new control to the form using the form's context.
-    pub(crate) fn new_control<C: ControlData + Default, FDT: Clone + PartialEq + 'static>(
+    pub(crate) fn new_control<C: ControlData<FD> + Default, FDT: Clone + PartialEq + 'static>(
         mut self,
         builder: impl BuilderFn<ControlBuilder<FD, C, FDT>>,
     ) -> Self {
@@ -91,7 +91,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
     }
 
     /// Adds a new control to the form using the form's context.
-    pub(crate) fn new_control_cx<C: ControlData + Default, FDT: Clone + PartialEq + 'static>(
+    pub(crate) fn new_control_cx<C: ControlData<FD> + Default, FDT: Clone + PartialEq + 'static>(
         mut self,
         builder: impl BuilderCxFn<ControlBuilder<FD, C, FDT>, FD::Context>,
     ) -> Self {
@@ -102,7 +102,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
     }
 
     /// Adds a vanity control to the form.
-    pub(crate) fn add_vanity<C: VanityControlData>(
+    pub(crate) fn add_vanity<C: VanityControlData<FD>>(
         &mut self,
         vanity_control: VanityControlBuilder<FD, C>,
     ) {
@@ -116,8 +116,9 @@ impl<FD: FormToolData> FormBuilder<FD> {
         let render_fn = move |fs: Rc<FD::Style>, fd: RwSignal<FD>| {
             let render_data = Rc::new(render_data);
             let value_getter = getter.map(|getter| (move || getter(fd.get())).into_signal());
-            let view =
-                move || VanityControlData::build_control(&*fs, render_data.clone(), value_getter);
+            let view = move || {
+                VanityControlData::render_control(&*fs, fd, render_data.clone(), value_getter)
+            };
             let view = match show_when {
                 Some(when) => {
                     let when = move || when(fd.into(), cx.clone());
@@ -132,7 +133,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
     }
 
     /// Adds a control to the form.
-    pub(crate) fn add_control<C: ControlData, FDT: Clone + PartialEq + 'static>(
+    pub(crate) fn add_control<C: ControlData<FD>, FDT: Clone + PartialEq + 'static>(
         &mut self,
         control: ControlBuilder<FD, C, FDT>,
     ) {
@@ -178,7 +179,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
 
     /// Helper for building all the functions and everything needed to render
     /// the view.
-    fn build_control_view<C: ControlData, FDT: 'static>(
+    fn build_control_view<C: ControlData<FD>, FDT: 'static>(
         fd: RwSignal<FD>,
         fs: Rc<FD::Style>,
         control_data: BuiltControlData<FD, C, FDT>,
@@ -195,34 +196,38 @@ impl<FD: FormToolData> FormBuilder<FD> {
         } = control_data;
 
         let render_data = Rc::new(render_data);
-        let (validation_signal, validation_signal_set) = create_signal(Ok(()));
+        let (validation_signal, validation_signal_set) = create_signal(ValidationState::Passed);
         let validation_fn_clone = validation_fn.clone();
-        let value_getter = move || {
-            let fd = fd.get();
+        let initial_value = unparse_fn(getter(fd.get_untracked()));
+        let (value_getter, value_setter) = create_signal(initial_value);
+        create_effect(move |_| {
+            fd.track();
+            if validation_signal.get().is_parse_err() {
+                return;
+            }
+
+            let fd = fd.get_untracked();
 
             // rerun validation if it is failing
-            if validation_signal.get_untracked().is_err() {
+            if validation_signal.get_untracked().is_validation_err() {
                 if let Some(ref validation_fn) = validation_fn_clone {
                     let validation_result = validation_fn(&fd);
                     // if validation succeeds this time, resolve the validation error
                     if validation_result.is_ok() {
-                        validation_signal_set.set(Ok(()));
+                        validation_signal_set.set(ValidationState::Passed);
                     }
                 }
             }
-            unparse_fn(getter(fd))
-        };
-        let value_getter = value_getter.into_signal();
 
+            let value = unparse_fn(getter(fd));
+            value_setter.set(value);
+        });
+        let value_getter = value_getter.into();
+
+        let validation_fn_clone = validation_fn.clone();
         let cloned_show_when = show_when.clone();
         let cloned_cx = cx.clone();
         let validation_cb = move || {
-            // first check if the validation signal is an error so that we
-            // can fail on parsing issues too
-            if let Some(Err(_)) = validation_signal.try_get_untracked() {
-                return false;
-            }
-
             // validation for non-visible fields always succeeds
             if let Some(ref show_when) = cloned_show_when {
                 if !show_when(fd.into(), cloned_cx.clone()) {
@@ -230,8 +235,16 @@ impl<FD: FormToolData> FormBuilder<FD> {
                 }
             }
 
+            // fail on parse falures
+            if validation_signal
+                .try_get_untracked()
+                .is_some_and(|v| v.is_parse_err())
+            {
+                return false;
+            }
+
             // run the validation function on the value now
-            let validation_fn = match validation_fn {
+            let validation_fn = match validation_fn_clone {
                 Some(ref v) => v,
                 None => return true, // No validation function so validation passes
             };
@@ -239,13 +252,17 @@ impl<FD: FormToolData> FormBuilder<FD> {
             let data = fd.get_untracked();
             let validation_result = validation_fn(&data);
             let succeeded = validation_result.is_ok();
-            validation_signal_set.set(validation_result);
+            let new_state = match validation_result {
+                Ok(()) => ValidationState::Passed,
+                Err(e) => ValidationState::ValidationError(e),
+            };
+            validation_signal_set.set(new_state);
             succeeded
         };
         let validation_cb = Box::new(validation_cb);
 
         let value_setter = Self::create_value_setter(
-            validation_cb.clone(),
+            validation_fn.clone(),
             validation_signal_set,
             parse_fn,
             setter,
@@ -253,8 +270,9 @@ impl<FD: FormToolData> FormBuilder<FD> {
         );
 
         let view = move || {
-            C::build_control(
+            C::render_control(
                 &*fs,
+                fd,
                 render_data.clone(),
                 value_getter,
                 value_setter.clone(),
@@ -273,20 +291,17 @@ impl<FD: FormToolData> FormBuilder<FD> {
 
     /// Helper for creating a setter function.
     fn create_value_setter<CRT: 'static, FDT: 'static>(
-        validation_cb: Box<dyn Fn() -> bool + 'static>,
-        validation_signal_set: WriteSignal<Result<(), String>>,
+        validation_fn: Option<Rc<dyn ValidationFn<FD>>>,
+        validation_signal_set: WriteSignal<ValidationState>,
         parse_fn: Box<dyn ParseFn<CRT, FDT>>,
         setter: Rc<dyn FieldSetter<FD, FDT>>,
         fd: RwSignal<FD>,
-    ) -> Rc<dyn Fn(CRT) + 'static> {
+    ) -> SignalSetter<CRT> {
         let value_setter = move |value| {
             let parsed = match parse_fn(value) {
-                Ok(p) => {
-                    validation_signal_set.set(Ok(()));
-                    p
-                }
+                Ok(p) => p,
                 Err(e) => {
-                    validation_signal_set.set(Err(e));
+                    validation_signal_set.set(ValidationState::ParseError(e));
                     return;
                 }
             };
@@ -297,9 +312,24 @@ impl<FD: FormToolData> FormBuilder<FD> {
             });
 
             // run validation
-            (validation_cb)();
+            let validation_fn = match validation_fn {
+                Some(ref v) => v,
+                None => {
+                    // No validation function so validation passes
+                    validation_signal_set.set(ValidationState::Passed);
+                    return;
+                }
+            };
+
+            let data = fd.get_untracked();
+            let validation_result = validation_fn(&data);
+            let new_state = match validation_result {
+                Ok(()) => ValidationState::Passed,
+                Err(e) => ValidationState::ValidationError(e),
+            };
+            validation_signal_set.set(new_state);
         };
-        Rc::new(value_setter)
+        value_setter.into_signal_setter()
     }
 
     /// Builds the direct send version of the form.
@@ -443,6 +473,29 @@ impl<FD: FormToolData> FormBuilder<FD> {
                 {elements}
             </Form>
         };
+
+        Form {
+            fd,
+            validations: self.validations,
+            view,
+        }
+    }
+
+    /// builds just the controls of the form.
+    pub(crate) fn build_form_controls(self, fd: FD, fs: FD::Style) -> Form<FD> {
+        let fd = create_rw_signal(fd);
+        let fs = Rc::new(fs);
+
+        let (views, _validation_cbs): (Vec<_>, Vec<_>) = self
+            .render_fns
+            .into_iter()
+            .map(|r_fn| r_fn(fs.clone(), fd))
+            .unzip();
+
+        let view = fs.form_frame(ControlRenderData {
+            data: views.into_view(),
+            styles: self.styles,
+        });
 
         Form {
             fd,

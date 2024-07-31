@@ -1,23 +1,37 @@
-use super::{BuilderCxFn, BuilderFn, ControlRenderData, VanityControlBuilder, VanityControlData};
+use super::{
+    BuilderCxFn, BuilderFn, ControlRenderData, GetterVanityControlData, VanityControlBuilder,
+    VanityControlData,
+};
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{MaybeSignal, Signal, View};
+use leptos::{prelude::Signal, View};
 use std::rc::Rc;
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Default)]
+pub enum HeadingLevel {
+    #[default]
+    H1,
+    H2,
+    H3,
+    H4,
+}
 
 /// Data used for the heading control.
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub struct HeadingData {
-    pub title: MaybeSignal<String>,
+    pub level: HeadingLevel,
 }
 
-impl VanityControlData for HeadingData {
-    fn build_control<FS: FormStyle>(
+impl<FD: FormToolData> VanityControlData<FD> for HeadingData {
+    fn render_control<FS: FormStyle>(
         fs: &FS,
+        _fd: leptos::prelude::RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
-        _value_getter: Option<leptos::prelude::Signal<String>>,
+        value_getter: Option<Signal<String>>,
     ) -> View {
-        fs.heading(control)
+        fs.heading(control, value_getter)
     }
 }
+impl<FD: FormToolData> GetterVanityControlData<FD> for HeadingData {}
 
 impl<FD: FormToolData> FormBuilder<FD> {
     /// Builds a heading and adds it to the form.
@@ -37,13 +51,32 @@ impl<FD: FormToolData> FormBuilder<FD> {
 impl<FD: FormToolData> VanityControlBuilder<FD, HeadingData> {
     /// Sets the title of this heading.
     pub fn title(mut self, title: impl ToString) -> Self {
-        self.data.title = MaybeSignal::Static(title.to_string());
+        let title = title.to_string();
+        self.getter = Some(Rc::new(move |_| title.clone()));
         self
     }
 
-    /// Sets the title of this heading to a signal.
-    pub fn title_signal(mut self, title: Signal<String>) -> Self {
-        self.data.title = MaybeSignal::Dynamic(title);
+    /// Sets this title to be a `h1`.
+    pub fn h1(mut self) -> Self {
+        self.data.level = HeadingLevel::H1;
+        self
+    }
+
+    /// Sets this title to be a `h2`.
+    pub fn h2(mut self) -> Self {
+        self.data.level = HeadingLevel::H2;
+        self
+    }
+
+    /// Sets this title to be a `h3`.
+    pub fn h3(mut self) -> Self {
+        self.data.level = HeadingLevel::H3;
+        self
+    }
+
+    /// Sets this title to be a `h4`.
+    pub fn h4(mut self) -> Self {
+        self.data.level = HeadingLevel::H4;
         self
     }
 }

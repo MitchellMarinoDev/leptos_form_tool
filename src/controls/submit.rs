@@ -1,23 +1,26 @@
-use super::{BuilderCxFn, BuilderFn, ControlRenderData, VanityControlBuilder, VanityControlData};
+use super::{
+    BuilderCxFn, BuilderFn, ControlRenderData, GetterVanityControlData, VanityControlBuilder,
+    VanityControlData,
+};
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{prelude::Signal, View};
+use leptos::{prelude::Signal, RwSignal, View};
 use std::rc::Rc;
 
 /// Data used for the submit button control.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-pub struct SubmitData {
-    pub text: String,
-}
+pub struct SubmitData;
 
-impl VanityControlData for SubmitData {
-    fn build_control<FS: FormStyle>(
+impl<FD: FormToolData> VanityControlData<FD> for SubmitData {
+    fn render_control<FS: FormStyle>(
         fs: &FS,
+        _fd: RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
-        _value_getter: Option<Signal<String>>,
+        value_getter: Option<Signal<String>>,
     ) -> View {
-        fs.submit(control)
+        fs.submit(control, value_getter)
     }
 }
+impl<FD: FormToolData> GetterVanityControlData<FD> for SubmitData {}
 
 impl<FD: FormToolData> FormBuilder<FD> {
     /// Builds a submit button and adds it to the form.
@@ -36,9 +39,12 @@ impl<FD: FormToolData> FormBuilder<FD> {
 }
 
 impl<FD: FormToolData> VanityControlBuilder<FD, SubmitData> {
-    /// Sets the submit button's text.
+    /// Sets the text of the submit button to a static string.
+    ///
+    /// For dynamic button text, use the `getter` method.
     pub fn text(mut self, text: impl ToString) -> Self {
-        self.data.text = text.to_string();
+        let text = text.to_string();
+        self.getter = Some(Rc::new(move |_| text.clone()));
         self
     }
 }

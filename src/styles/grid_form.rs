@@ -1,12 +1,9 @@
 use super::FormStyle;
-use crate::{
-    controls::{
-        button::ButtonData, checkbox::CheckboxData, heading::HeadingData, hidden::HiddenData,
-        output::OutputData, radio_buttons::RadioButtonsData, select::SelectData,
-        slider::SliderData, spacer::SpacerData, stepper::StepperData, submit::SubmitData,
-        text_area::TextAreaData, text_input::TextInputData, ControlData, ControlRenderData,
-    },
-    FormToolData,
+use crate::controls::{
+    button::ButtonData, checkbox::CheckboxData, heading::HeadingData, hidden::HiddenData,
+    output::OutputData, radio_buttons::RadioButtonsData, select::SelectData, slider::SliderData,
+    spacer::SpacerData, stepper::StepperData, submit::SubmitData, text_area::TextAreaData,
+    text_input::TextInputData, ControlRenderData, UpdateEvent, ValidationState,
 };
 use leptos::*;
 use std::rc::Rc;
@@ -72,36 +69,55 @@ impl FormStyle for GridFormStyle {
         )
     }
 
-    fn heading(&self, control: Rc<ControlRenderData<Self, HeadingData>>) -> View {
-        self.custom_component(
-            &control.styles,
-            view! { <h2 class="form_heading">{control.data.title.clone()}</h2> }.into_view(),
-        )
-    }
-
-    fn submit(&self, control: Rc<ControlRenderData<Self, SubmitData>>) -> View {
-        self.custom_component(
-            &control.styles,
-            view! { <input type="submit" value=&control.data.text class="form_submit"/> }
-                .into_view(),
-        )
-    }
-
-    fn button<FD: FormToolData>(
+    fn heading(
         &self,
-        control: Rc<ControlRenderData<Self, ButtonData<FD>>>,
-        data_signal: RwSignal<FD>,
+        control: Rc<ControlRenderData<Self, HeadingData>>,
+        value_getter: Option<Signal<String>>,
+    ) -> View {
+        use crate::controls::heading::HeadingLevel::*;
+
+        let title = move || value_getter.map(|v| v.get()).unwrap_or_default();
+
+        let view = match control.data.level {
+            H1 => view! { <h1 class="form_heading"> {title} </h1> }.into_view(),
+            H2 => view! { <h2 class="form_heading"> {title} </h2> }.into_view(),
+            H3 => view! { <h3 class="form_heading"> {title} </h3> }.into_view(),
+            H4 => view! { <h4 class="form_heading"> {title} </h4> }.into_view(),
+        };
+
+        self.custom_component(&control.styles, view)
+    }
+
+    fn submit(
+        &self,
+        control: Rc<ControlRenderData<Self, SubmitData>>,
+        value_getter: Option<Signal<String>>,
+    ) -> View {
+        let title = move || value_getter.map(|v| v.get()).unwrap_or_default();
+
+        self.custom_component(
+            &control.styles,
+            view! { <input type="submit" value=title class="form_submit"/> }.into_view(),
+        )
+    }
+
+    fn button(
+        &self,
+        control: Rc<ControlRenderData<Self, ButtonData>>,
+        value_getter: Option<Signal<String>>,
     ) -> View {
         let action = control.data.action.clone();
         let on_click = move |ev: MouseEvent| {
-            if let Some(action) = action.clone() {
-                action(ev, data_signal)
+            if let Some(ref action) = action {
+                action(ev)
             }
         };
 
+        let title = move || value_getter.map(|v| v.get()).unwrap_or_default();
+
         let view = view! {
             <button type="button" class="form_button" on:click=on_click>
-                {&control.data.text}
+                {title}
             </button>
         }
         .into_view();
@@ -128,7 +144,7 @@ impl FormStyle for GridFormStyle {
             <input
                 name=&control.data.name
                 prop:value=value_getter
-                style="display: none; column-span: none"
+                style="visibility: hidden; position: absolute;"
             />
         }
         .into_view()
@@ -137,17 +153,11 @@ impl FormStyle for GridFormStyle {
     fn text_input(
         &self,
         control: Rc<ControlRenderData<Self, TextInputData>>,
-        value_getter: Signal<<TextInputData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<TextInputData as ControlData>::ReturnType)>,
-        validation_state: Signal<Result<(), String>>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
+        validation_state: Signal<ValidationState>,
     ) -> View {
-        let view = view! {
-            <div>
-                <label for=&control.data.name class="form_label">
-                    {control.data.label.as_ref()}
-                </label>
-                <span class="form_error">{move || validation_state.get().err()}</span>
-            </div>
+        let input = view! {
             <input
                 type=control.data.input_type
                 id=&control.data.name
@@ -156,10 +166,29 @@ impl FormStyle for GridFormStyle {
                 class="form_input"
                 class=("form_input_invalid", move || validation_state.get().is_err())
                 prop:value=move || value_getter.get()
-                on:focusout=move |ev| {
-                    value_setter(event_target_value(&ev));
-                }
             />
+        };
+
+        let input = match control.data.update_event {
+            UpdateEvent::OnFocusout => input.on(ev::focusout, move |ev| {
+                value_setter.set(event_target_value(&ev));
+            }),
+            UpdateEvent::OnInput => input.on(ev::input, move |ev| {
+                value_setter.set(event_target_value(&ev));
+            }),
+            UpdateEvent::OnChange => input.on(ev::change, move |ev| {
+                value_setter.set(event_target_value(&ev));
+            }),
+        };
+
+        let view = view! {
+            <div>
+                <label for=&control.data.name class="form_label">
+                    {control.data.label.as_ref()}
+                </label>
+                <span class="form_error">{move || validation_state.get().take_msg()}</span>
+            </div>
+            {input}
         }
         .into_view();
 
@@ -169,28 +198,42 @@ impl FormStyle for GridFormStyle {
     fn text_area(
         &self,
         control: Rc<ControlRenderData<Self, TextAreaData>>,
-        value_getter: Signal<<TextAreaData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<TextAreaData as ControlData>::ReturnType)>,
-        validation_state: Signal<Result<(), String>>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
+        validation_state: Signal<ValidationState>,
     ) -> View {
-        let view = view! {
-            <div>
-                <label for=&control.data.name class="form_label">
-                    {control.data.label.as_ref()}
-                </label>
-                <span class="form_error">{move || validation_state.get().err()}</span>
-            </div>
+        let input = view! {
             <textarea
                 id=&control.data.name
                 name=&control.data.name
                 placeholder=control.data.placeholder.as_ref()
                 prop:value=move || value_getter.get()
+                style="resize: vertical;"
                 class="form_input"
                 class=("form_input_invalid", move || validation_state.get().is_err())
-                on:focusout=move |ev| {
-                    value_setter(event_target_value(&ev));
-                }
             ></textarea>
+        };
+
+        let input = match control.data.update_event {
+            UpdateEvent::OnFocusout => input.on(ev::focusout, move |ev| {
+                value_setter.set(event_target_value(&ev));
+            }),
+            UpdateEvent::OnInput => input.on(ev::input, move |ev| {
+                value_setter.set(event_target_value(&ev));
+            }),
+            UpdateEvent::OnChange => input.on(ev::change, move |ev| {
+                value_setter.set(event_target_value(&ev));
+            }),
+        };
+
+        let view = view! {
+            <div>
+                <label for=&control.data.name class="form_label">
+                    {control.data.label.as_ref()}
+                </label>
+                <span class="form_error">{move || validation_state.get().take_msg()}</span>
+            </div>
+            {input}
         }
         .into_view();
 
@@ -200,9 +243,9 @@ impl FormStyle for GridFormStyle {
     fn radio_buttons(
         &self,
         control: Rc<ControlRenderData<Self, RadioButtonsData>>,
-        value_getter: Signal<<RadioButtonsData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<RadioButtonsData as ControlData>::ReturnType)>,
-        validation_state: Signal<Result<(), String>>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
+        validation_state: Signal<ValidationState>,
     ) -> View {
         let buttons_view = control
             .data
@@ -224,7 +267,7 @@ impl FormStyle for GridFormStyle {
                         on:input=move |ev| {
                             let new_value = event_target_checked(&ev);
                             if new_value {
-                                value_setter(value_clone2.clone());
+                                value_setter.set(value_clone2.clone());
                             }
                         }
                     />
@@ -240,7 +283,7 @@ impl FormStyle for GridFormStyle {
                 <label for=&control.data.name class="form_label">
                     {control.data.label.as_ref()}
                 </label>
-                <span class="form_error">{move || validation_state.get().err()}</span>
+                <span class="form_error">{move || validation_state.get().take_msg()}</span>
             </div>
             <div
                 class="form_input"
@@ -257,9 +300,9 @@ impl FormStyle for GridFormStyle {
     fn select(
         &self,
         control: Rc<ControlRenderData<Self, SelectData>>,
-        value_getter: Signal<<SelectData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<SelectData as ControlData>::ReturnType)>,
-        validation_state: Signal<Result<(), String>>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
+        validation_state: Signal<ValidationState>,
     ) -> View {
         let control_clone = control.clone();
         let options_view = move || {
@@ -293,7 +336,7 @@ impl FormStyle for GridFormStyle {
                 <label for=&control.data.name class="form_label">
                     {control.data.label.as_ref()}
                 </label>
-                <span class="form_error">{move || validation_state.get().err()}</span>
+                <span class="form_error">{move || validation_state.get().take_msg()}</span>
             </div>
             <select
                 id=&control.data.name
@@ -301,7 +344,7 @@ impl FormStyle for GridFormStyle {
                 class="form_input"
                 class=("form_input_invalid", move || validation_state.get().is_err())
                 on:input=move |ev| {
-                    value_setter(event_target_value(&ev));
+                    value_setter.set(event_target_value(&ev));
                 }
             >
                 {blank_option_view}
@@ -316,26 +359,34 @@ impl FormStyle for GridFormStyle {
     fn checkbox(
         &self,
         control: Rc<ControlRenderData<Self, CheckboxData>>,
-        value_getter: Signal<<CheckboxData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<CheckboxData as ControlData>::ReturnType)>,
+        value_getter: Signal<bool>,
+        value_setter: SignalSetter<bool>,
     ) -> View {
+        let label = control
+            .data
+            .label
+            .clone()
+            .unwrap_or(control.data.name.clone());
+
         let view = view! {
-            <label for=&control.data.name class="form_label">
-                {control.data.label.as_ref()}
-            </label>
-            <label class="form_input" for=&control.data.name>
+            <label
+                for=&control.data.name
+                class="form_checkbox"
+                class=("form_checkbox_checked", move || value_getter.get())
+                class=("form_checkbox_unchecked", move || !value_getter.get())
+            >
                 <input
                     type="checkbox"
                     id=&control.data.name
                     name=&control.data.name
+                    style="margin: auto 0;"
                     prop:checked=value_getter
                     on:input=move |ev| {
                         let new_value = event_target_checked(&ev);
-                        value_setter(new_value);
+                        value_setter.set(new_value);
                     }
                 />
-
-                <span>{control.data.label.as_ref()}</span>
+                <span style="margin: auto 0.5rem;">{label}</span>
             </label>
         }
         .into_view();
@@ -346,29 +397,29 @@ impl FormStyle for GridFormStyle {
     fn stepper(
         &self,
         control: Rc<ControlRenderData<Self, StepperData>>,
-        value_getter: Signal<<StepperData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<StepperData as ControlData>::ReturnType)>,
-        validation_state: Signal<Result<(), String>>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
+        validation_state: Signal<ValidationState>,
     ) -> View {
         let view = view! {
             <div>
                 <label for=&control.data.name class="form_label">
                     {control.data.label.as_ref()}
                 </label>
-                <span class="form_error">{move || validation_state.get().err()}</span>
+                <span class="form_error">{move || validation_state.get().take_msg()}</span>
             </div>
             <input
                 type="number"
                 id=&control.data.name
                 name=&control.data.name
-                step=control.data.step
-                min=control.data.min
-                max=control.data.max
+                step=control.data.step.clone()
+                min=control.data.min.clone()
+                max=control.data.max.clone()
                 class="form_input"
                 class=("form_input_invalid", move || validation_state.get().is_err())
                 prop:value=move || value_getter.get()
-                on:change=move |ev| {
-                    value_setter(event_target_value(&ev));
+                on:input=move |ev| {
+                    value_setter.set(event_target_value(&ev));
                 }
             />
         }
@@ -380,31 +431,29 @@ impl FormStyle for GridFormStyle {
     fn slider(
         &self,
         control: Rc<ControlRenderData<Self, SliderData>>,
-        value_getter: Signal<<SliderData as ControlData>::ReturnType>,
-        value_setter: Rc<dyn Fn(<SliderData as ControlData>::ReturnType)>,
-        validation_state: Signal<Result<(), String>>,
+        value_getter: Signal<String>,
+        value_setter: SignalSetter<String>,
+        validation_state: Signal<ValidationState>,
     ) -> View {
         let view = view! {
             <div>
                 <label for=&control.data.name class="form_label">
                     {control.data.label.as_ref()}
                 </label>
-                <span class="form_error">{move || validation_state.get().err()}</span>
+                <span class="form_error">{move || validation_state.get().take_msg()}</span>
             </div>
             <input
                 type="range"
                 id=&control.data.name
                 name=&control.data.name
-                min=control.data.min
-                max=control.data.max
+                min=control.data.min.clone()
+                max=control.data.max.clone()
                 class="form_input"
                 class=("form_input_invalid", move || validation_state.get().is_err())
                 prop:value=move || value_getter.get()
                 on:input=move |ev| {
-                    let value = event_target_value(&ev).parse::<i32>().ok();
-                    if let Some(value) = value {
-                        value_setter(value);
-                    }
+                    let value = event_target_value(&ev);
+                    value_setter.set(value);
                 }
             />
         }
