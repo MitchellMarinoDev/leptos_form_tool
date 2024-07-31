@@ -214,14 +214,8 @@ impl<FD: FormToolData, FDT> ControlBuilder<FD, SelectBuildData<FD>, FDT> {
     /// This will overwrite any pervious options setting.
     pub fn with_dynamic_options_valued(
         mut self,
-        derived_signal: impl Fn(RwSignal<FD>) -> Vec<String> + 'static,
+        derived_signal: impl Fn(RwSignal<FD>) -> Vec<(String, String)> + 'static,
     ) -> Self {
-        let derived_signal = move |fd| {
-            derived_signal(fd)
-                .into_iter()
-                .map(|v| (v.clone(), v))
-                .collect::<Vec<_>>()
-        };
         self.data.dynamic_options = Some(Rc::new(derived_signal));
         self
     }
