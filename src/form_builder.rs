@@ -333,9 +333,10 @@ impl<FD: FormToolData> FormBuilder<FD> {
     }
 
     /// Builds the direct send version of the form.
-    pub(crate) fn build_form<ServFn>(
+    pub(crate) fn build_form<ServFn, F: Fn(SubmitEvent, RwSignal<FD>) + 'static>(
         self,
         action: Action<ServFn, Result<ServFn::Output, ServerFnError<ServFn::Error>>>,
+        on_submit: F,
         fd: FD,
         fs: FD::Style,
     ) -> Form<FD>
@@ -360,18 +361,17 @@ impl<FD: FormToolData> FormBuilder<FD> {
         });
 
         let on_submit = move |ev: SubmitEvent| {
-            let mut failed = false;
-            for validation in validation_cbs.iter().flatten() {
-                if !validation() {
-                    failed = true;
-                }
-            }
-            if failed {
-                ev.prevent_default();
+            if ev.default_prevented() {
                 return;
             }
-
             ev.prevent_default();
+            for validation in validation_cbs.iter().flatten() {
+                if !validation() {
+                    return;
+                }
+            }
+            on_submit(ev, fd);
+
             let server_fn = ServFn::from(fd.get_untracked());
             action.dispatch(server_fn);
         };
@@ -390,9 +390,10 @@ impl<FD: FormToolData> FormBuilder<FD> {
     }
 
     /// Builds the action form version of the form.
-    pub(crate) fn build_action_form<ServFn>(
+    pub(crate) fn build_action_form<ServFn, F: Fn(SubmitEvent, RwSignal<FD>) + 'static>(
         self,
         action: Action<ServFn, Result<ServFn::Output, ServerFnError<ServFn::Error>>>,
+        on_submit: F,
         fd: FD,
         fs: FD::Style,
     ) -> Form<FD>
@@ -416,15 +417,16 @@ impl<FD: FormToolData> FormBuilder<FD> {
         });
 
         let on_submit = move |ev: SubmitEvent| {
-            let mut failed = false;
+            if ev.default_prevented() {
+                return;
+            }
             for validation in validation_cbs.iter().flatten() {
                 if !validation() {
-                    failed = true;
+                    ev.prevent_default();
+                    return;
                 }
             }
-            if failed {
-                ev.prevent_default();
-            }
+            on_submit(ev, fd);
         };
 
         let view = view! {
@@ -441,7 +443,13 @@ impl<FD: FormToolData> FormBuilder<FD> {
     }
 
     /// builds the plain form version of the form.
-    pub(crate) fn build_plain_form(self, url: String, fd: FD, fs: FD::Style) -> Form<FD> {
+    pub(crate) fn build_plain_form<F: Fn(SubmitEvent, RwSignal<FD>) + 'static>(
+        self,
+        url: String,
+        on_submit: F,
+        fd: FD,
+        fs: FD::Style,
+    ) -> Form<FD> {
         let fd = create_rw_signal(fd);
         let fs = Rc::new(fs);
 
@@ -457,15 +465,16 @@ impl<FD: FormToolData> FormBuilder<FD> {
         });
 
         let on_submit = move |ev: SubmitEvent| {
-            let mut failed = false;
+            if ev.default_prevented() {
+                return;
+            }
             for validation in validation_cbs.iter().flatten() {
                 if !validation() {
-                    failed = true;
+                    ev.prevent_default();
+                    return;
                 }
             }
-            if failed {
-                ev.prevent_default();
-            }
+            on_submit(ev, fd);
         };
 
         let view = view! {
