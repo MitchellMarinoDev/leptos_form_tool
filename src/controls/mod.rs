@@ -146,7 +146,7 @@ pub struct ControlRenderData<FS: FormStyle + ?Sized, C: ?Sized> {
 /// The data needed to render a read-only control of type `C`.
 pub struct VanityControlBuilder<FD: FormToolData, C: VanityControlData<FD>> {
     pub(crate) style_attributes: Vec<<FD::Style as FormStyle>::StylingAttributes>,
-    pub(crate) data: C,
+    pub data: C,
     pub(crate) getter: Option<Rc<dyn FieldGetter<FD, String>>>,
     pub(crate) show_when: Option<Box<dyn ShowWhenFn<FD, FD::Context>>>,
 }
