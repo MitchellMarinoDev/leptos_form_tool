@@ -102,9 +102,9 @@ impl ValidationState {
 /// The possibilities for when a control updates the form data.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum UpdateEvent {
-    #[default]
     OnFocusout,
     OnInput,
+    #[default]
     OnChange,
 }
 
