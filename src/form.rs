@@ -1,4 +1,5 @@
 use crate::{controls::ValidationFn, form_builder::FormBuilder, styles::FormStyle};
+use ev::SubmitEvent;
 use leptos::{
     server_fn::{client::Client, codec::PostUrl, request::ClientReq, ServerFn},
     *,
@@ -121,9 +122,10 @@ pub trait FormToolData: Clone + 'static {
     /// - [`get_action_form`](Self::get_action_form)
     /// - [`get_plain_form`](Self::get_plain_form)
     /// - [`get_form_controls`](Self::get_form_controls)
-    fn get_form<ServFn>(
+    fn get_form<ServFn, F: Fn(SubmitEvent, RwSignal<Self>) + 'static>(
         self,
         action: Action<ServFn, Result<ServFn::Output, ServerFnError<ServFn::Error>>>,
+        on_submit: F,
         style: Self::Style,
         context: Self::Context,
     ) -> Form<Self>
@@ -135,7 +137,7 @@ pub trait FormToolData: Clone + 'static {
     {
         let builder = FormBuilder::new(context);
         let builder = Self::build_form(builder);
-        builder.build_form(action, self, style)
+        builder.build_form(action, on_submit, self, style)
     }
 
     /// Constructs a [`Form`] for this [`FormToolData`] type.
@@ -148,9 +150,10 @@ pub trait FormToolData: Clone + 'static {
     /// - [`get_form`](Self::get_form)
     /// - [`get_plain_form`](Self::get_plain_form)
     /// - [`get_form_controls`](Self::get_form_controls)
-    fn get_action_form<ServFn>(
+    fn get_action_form<ServFn, F: Fn(SubmitEvent, RwSignal<Self>) + 'static>(
         self,
         action: Action<ServFn, Result<ServFn::Output, ServerFnError<ServFn::Error>>>,
+        on_submit: F,
         style: Self::Style,
         context: Self::Context,
     ) -> Form<Self>
@@ -161,7 +164,7 @@ pub trait FormToolData: Clone + 'static {
     {
         let builder = FormBuilder::new(context);
         let builder = Self::build_form(builder);
-        builder.build_action_form(action, self, style)
+        builder.build_action_form(action, on_submit, self, style)
     }
 
     /// Constructs a [`Form`] for this [`FormToolData`] type.
@@ -174,15 +177,16 @@ pub trait FormToolData: Clone + 'static {
     /// - [`get_form`](Self::get_form)
     /// - [`get_action_form`](Self::get_action_form)
     /// - [`get_form_controls`](Self::get_form_controls)
-    fn get_plain_form(
+    fn get_plain_form<F: Fn(SubmitEvent, RwSignal<Self>) + 'static>(
         self,
-        action: impl ToString,
+        url: impl ToString,
+        on_submit: F,
         style: Self::Style,
         context: Self::Context,
     ) -> Form<Self> {
         let builder = FormBuilder::new(context);
         let builder = Self::build_form(builder);
-        builder.build_plain_form(action.to_string(), self, style)
+        builder.build_plain_form(url.to_string(), on_submit, self, style)
     }
 
     /// Constructs a [`Form`] for this [`FormToolData`] type.

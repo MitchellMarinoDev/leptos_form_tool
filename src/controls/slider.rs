@@ -6,25 +6,13 @@ use leptos::{MaybeSignal, RwSignal, Signal, SignalSetter, View};
 use std::rc::Rc;
 
 /// Data used for the slider control.
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct SliderData {
     pub name: String,
     pub label: Option<String>,
     pub step: Option<MaybeSignal<String>>,
     pub min: Option<MaybeSignal<String>>,
     pub max: Option<MaybeSignal<String>>,
-}
-
-impl Default for SliderData {
-    fn default() -> Self {
-        SliderData {
-            name: String::new(),
-            label: None,
-            step: None,
-            min: None,
-            max: None,
-        }
-    }
 }
 
 impl<FD: FormToolData> ControlData<FD> for SliderData {

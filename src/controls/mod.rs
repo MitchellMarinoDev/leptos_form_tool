@@ -24,7 +24,7 @@ pub trait ValidationFn<FD: ?Sized>: Fn(&FD) -> Result<(), String> + 'static {}
 pub trait ValidationCb: Fn() -> bool + 'static {}
 pub trait ParseFn<CR, FDT>: Fn(CR) -> Result<FDT, String> + 'static {}
 pub trait UnparseFn<CR, FDT>: Fn(FDT) -> CR + 'static {}
-pub trait FieldGetter<FD, FDT>: Fn(FD) -> FDT + 'static {}
+pub trait FieldGetter<FD, FDT>: Fn(&FD) -> FDT + 'static {}
 pub trait FieldSetter<FD, FDT>: Fn(&mut FD, FDT) + 'static {}
 pub trait ShowWhenFn<FD: 'static, CX>: Fn(Signal<FD>, Rc<CX>) -> bool + 'static {}
 pub trait RenderFn<FS, FD: 'static>:
@@ -39,7 +39,7 @@ impl<FDT, T> ValidationFn<FDT> for T where T: Fn(&FDT) -> Result<(), String> + '
 impl<T> ValidationCb for T where T: Fn() -> bool + 'static {}
 impl<CR, FDT, F> ParseFn<CR, FDT> for F where F: Fn(CR) -> Result<FDT, String> + 'static {}
 impl<CR, FDT, F> UnparseFn<CR, FDT> for F where F: Fn(FDT) -> CR + 'static {}
-impl<FD, FDT, F> FieldGetter<FD, FDT> for F where F: Fn(FD) -> FDT + 'static {}
+impl<FD, FDT, F> FieldGetter<FD, FDT> for F where F: Fn(&FD) -> FDT + 'static {}
 impl<FD, FDT, F> FieldSetter<FD, FDT> for F where F: Fn(&mut FD, FDT) + 'static {}
 impl<FD: 'static, CX, F> ShowWhenFn<FD, CX> for F where F: Fn(Signal<FD>, Rc<CX>) -> bool + 'static {}
 impl<FS, FD: 'static, F> RenderFn<FS, FD> for F where
@@ -82,10 +82,7 @@ impl ValidationState {
     }
     /// Returns true if self is either `ParseError` or `ValidationError`.
     pub fn is_err(&self) -> bool {
-        matches!(
-            self,
-            ValidationState::ParseError(_) | ValidationState::ValidationError(_)
-        )
+        !self.is_passed()
     }
 
     /// Returns true if self is `ParseError`.
@@ -102,8 +99,8 @@ impl ValidationState {
 /// The possibilities for when a control updates the form data.
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum UpdateEvent {
-    #[default]
     OnFocusout,
+    #[default]
     OnInput,
     OnChange,
 }
@@ -146,7 +143,7 @@ pub struct ControlRenderData<FS: FormStyle + ?Sized, C: ?Sized> {
 /// The data needed to render a read-only control of type `C`.
 pub struct VanityControlBuilder<FD: FormToolData, C: VanityControlData<FD>> {
     pub(crate) style_attributes: Vec<<FD::Style as FormStyle>::StylingAttributes>,
-    pub(crate) data: C,
+    pub data: C,
     pub(crate) getter: Option<Rc<dyn FieldGetter<FD, String>>>,
     pub(crate) show_when: Option<Box<dyn ShowWhenFn<FD, FD::Context>>>,
 }
@@ -584,7 +581,7 @@ where
 }
 
 impl<FD: FormToolData, C: ValidatedControlData<FD>, FDT> ControlBuilder<FD, C, FDT> {
-    /// Sets the validation function for this control
+    /// Sets the validation function for this control.
     ///
     /// This allows you to check if the parsed value is a valid value.
     ///

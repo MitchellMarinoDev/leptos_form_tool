@@ -6,6 +6,7 @@ use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
 use leptos::{IntoSignal, MaybeSignal, RwSignal, Signal, SignalGet, SignalSetter, View};
 use std::rc::Rc;
 
+type DynamicOptionsGetter<FD> = Rc<dyn Fn(RwSignal<FD>) -> Vec<(String, String)> + 'static>;
 /// Data used for building the select control.
 pub struct SelectBuildData<FD: FormToolData> {
     pub name: String,
@@ -14,7 +15,7 @@ pub struct SelectBuildData<FD: FormToolData> {
     ///
     /// This is just a temp value for building, and should not be used
     /// directly
-    dynamic_options: Option<Rc<dyn Fn(RwSignal<FD>) -> Vec<(String, String)> + 'static>>,
+    dynamic_options: Option<DynamicOptionsGetter<FD>>,
     /// The options for the select.
     ///
     /// The first value is the string to display, the second is the value.
