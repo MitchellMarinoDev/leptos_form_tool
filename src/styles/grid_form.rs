@@ -252,7 +252,6 @@ impl FormStyle for GridFormStyle {
             .options
             .iter()
             .map(|(display, value)| {
-                let value_setter = value_setter.clone();
                 let display = display.clone();
                 let value = value.clone();
                 let value_clone = value.clone();

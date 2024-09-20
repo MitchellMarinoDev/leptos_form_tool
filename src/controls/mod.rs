@@ -24,7 +24,7 @@ pub trait ValidationFn<FD: ?Sized>: Fn(&FD) -> Result<(), String> + 'static {}
 pub trait ValidationCb: Fn() -> bool + 'static {}
 pub trait ParseFn<CR, FDT>: Fn(CR) -> Result<FDT, String> + 'static {}
 pub trait UnparseFn<CR, FDT>: Fn(FDT) -> CR + 'static {}
-pub trait FieldGetter<FD, FDT>: Fn(FD) -> FDT + 'static {}
+pub trait FieldGetter<FD, FDT>: Fn(&FD) -> FDT + 'static {}
 pub trait FieldSetter<FD, FDT>: Fn(&mut FD, FDT) + 'static {}
 pub trait ShowWhenFn<FD: 'static, CX>: Fn(Signal<FD>, Rc<CX>) -> bool + 'static {}
 pub trait RenderFn<FS, FD: 'static>:
@@ -39,7 +39,7 @@ impl<FDT, T> ValidationFn<FDT> for T where T: Fn(&FDT) -> Result<(), String> + '
 impl<T> ValidationCb for T where T: Fn() -> bool + 'static {}
 impl<CR, FDT, F> ParseFn<CR, FDT> for F where F: Fn(CR) -> Result<FDT, String> + 'static {}
 impl<CR, FDT, F> UnparseFn<CR, FDT> for F where F: Fn(FDT) -> CR + 'static {}
-impl<FD, FDT, F> FieldGetter<FD, FDT> for F where F: Fn(FD) -> FDT + 'static {}
+impl<FD, FDT, F> FieldGetter<FD, FDT> for F where F: Fn(&FD) -> FDT + 'static {}
 impl<FD, FDT, F> FieldSetter<FD, FDT> for F where F: Fn(&mut FD, FDT) + 'static {}
 impl<FD: 'static, CX, F> ShowWhenFn<FD, CX> for F where F: Fn(Signal<FD>, Rc<CX>) -> bool + 'static {}
 impl<FS, FD: 'static, F> RenderFn<FS, FD> for F where

@@ -115,7 +115,8 @@ impl<FD: FormToolData> FormBuilder<FD> {
         let cx = self.cx.clone();
         let render_fn = move |fs: Rc<FD::Style>, fd: RwSignal<FD>| {
             let render_data = Rc::new(render_data);
-            let value_getter = getter.map(|getter| (move || getter(fd.get())).into_signal());
+            let value_getter =
+                getter.map(|getter| (move || fd.with(|fd| getter(fd))).into_signal());
             let view = move || {
                 VanityControlData::render_control(&*fs, fd, render_data.clone(), value_getter)
             };
@@ -198,7 +199,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
         let render_data = Rc::new(render_data);
         let (validation_signal, validation_signal_set) = create_signal(ValidationState::Passed);
         let validation_fn_clone = validation_fn.clone();
-        let initial_value = unparse_fn(getter(fd.get_untracked()));
+        let initial_value = unparse_fn(fd.with_untracked(|fd| getter(fd)));
         let (value_getter, value_setter) = create_signal(initial_value);
         create_effect(move |_| {
             fd.track();
@@ -219,7 +220,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
                 }
             }
 
-            let value = unparse_fn(getter(fd));
+            let value = unparse_fn(getter(&fd));
             value_setter.set(value);
         });
         let value_getter = value_getter.into();
@@ -275,7 +276,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
                 fd,
                 render_data.clone(),
                 value_getter,
-                value_setter.clone(),
+                value_setter,
                 validation_signal.into(),
             )
         };
