@@ -82,10 +82,7 @@ impl ValidationState {
     }
     /// Returns true if self is either `ParseError` or `ValidationError`.
     pub fn is_err(&self) -> bool {
-        matches!(
-            self,
-            ValidationState::ParseError(_) | ValidationState::ValidationError(_)
-        )
+        !self.is_passed()
     }
 
     /// Returns true if self is `ParseError`.
@@ -584,7 +581,7 @@ where
 }
 
 impl<FD: FormToolData, C: ValidatedControlData<FD>, FDT> ControlBuilder<FD, C, FDT> {
-    /// Sets the validation function for this control
+    /// Sets the validation function for this control.
     ///
     /// This allows you to check if the parsed value is a valid value.
     ///

@@ -15,11 +15,33 @@
 	}
 }
 
+.custom_component_parent {
+	// CSS here
+}
+
+.group_parent {
+	// CSS here
+}
+
+.form_group {
+	background-color: rgba(107, 114, 128, 0.20);
+	border-radius: 25px;
+	padding: 20px;
+}
+
+.spacer_parent {
+	// CSS here
+}
+
 .form_heading {
 	text-align: center;
 	font-weight: bold;
 	grid-column: span 12;
 	margin: 0;
+}
+
+.heading_parent {
+	// CSS here
 }
 
 h1.form_heading {
@@ -43,12 +65,6 @@ h4.form_heading {
 	padding-bottom: 0;
 }
 
-.form_group {
-	background-color: rgba(107, 114, 128, 0.20);
-	border-radius: 25px;
-  padding: 20px; 
-}
-
 .form_label {
 	font-family: ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Noto Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji;
 	text-transform: uppercase;
@@ -61,6 +77,12 @@ h4.form_heading {
 	display: inline;
 }
 
+.text_input_parent {
+	// CSS here
+}
+.text_area_parent {
+	// CSS here
+}
 .form_input {
 	display: block;
 	box-sizing: border-box;
@@ -91,6 +113,10 @@ h4.form_heading {
 	color: #ef4444;
 }
 
+.button_parent {
+	display: flex;
+	flex-direction: column;
+}
 .form_button {
 	display: block;
 	outline: none;
@@ -100,13 +126,18 @@ h4.form_heading {
 	color: #fff;
 	font-weight: bold;
 	cursor: pointer;
-	margin: 0 auto auto auto;
+	margin-top: auto;
+	margin-left: auto;
+	margin-right: auto;
 	padding: 0.75rem 1.25rem;
 	font-size: 1rem;
 	appearance: none;
 	min-height: 40px;
 }
 
+.checkbox_parent {
+	// CSS here
+}
 .form_checkbox {
 	display: block;
 	text-transform: uppercase;
@@ -125,6 +156,10 @@ h4.form_heading {
 	background-color: rgb(107 114 128);
 }
 
+.submit_parent {
+	@extend .button_parent;
+}
+
 .form_submit {
 	@extend .form_button;
 	@extend .col-span-full;
@@ -133,6 +168,26 @@ h4.form_heading {
 
 .form_submit:hover {
 	background-color: #005fb3;
+}
+
+.output_parent {
+	// CSS here
+}
+
+.radio_buttons_parent {
+	// CSS here
+}
+
+.select_parent {
+	// CSS here
+}
+
+.stepper_parent {
+	// CSS here
+}
+
+.slider_parent {
+	// CSS here
 }
 
 // column widths

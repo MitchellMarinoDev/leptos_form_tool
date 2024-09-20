@@ -30,15 +30,13 @@ pub enum GFStyleAttr {
 #[derive(Clone, Copy, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct GridFormStyle;
 
-impl FormStyle for GridFormStyle {
-    type StylingAttributes = GFStyleAttr;
-
-    fn form_frame(&self, form: ControlRenderData<Self, View>) -> View {
-        view! { <div class="form_grid">{form.data}</div> }.into_view()
-    }
-
-    /// A common function that wraps the given view in the styles
-    fn custom_component(&self, styles: &[Self::StylingAttributes], inner: View) -> View {
+impl GridFormStyle {
+    fn common_component(
+        &self,
+        styles: &[<GridFormStyle as FormStyle>::StylingAttributes],
+        parent_class: &'static str,
+        inner: View,
+    ) -> View {
         let mut width = 12;
         let mut tooltip = None;
         for style in styles.iter() {
@@ -49,22 +47,35 @@ impl FormStyle for GridFormStyle {
         }
 
         view! {
-            <div style:grid-column=format!("span {}", width) title=tooltip>
+            <div class=parent_class style:grid-column=format!("span {}", width) title=tooltip>
                 {inner}
             </div>
         }
         .into_view()
     }
+}
+impl FormStyle for GridFormStyle {
+    type StylingAttributes = GFStyleAttr;
+
+    fn form_frame(&self, form: ControlRenderData<Self, View>) -> View {
+        view! { <div class="form_grid">{form.data}</div> }.into_view()
+    }
+
+    /// A common function that wraps the given view in the styles
+    fn custom_component(&self, styles: &[Self::StylingAttributes], inner: View) -> View {
+        self.common_component(styles, "custom_component_parent", inner)
+    }
 
     fn group(&self, group: Rc<ControlRenderData<Self, View>>) -> View {
         let view = view! { <div class="form_group form_grid">{&group.data}</div> }.into_view();
 
-        self.custom_component(&group.styles, view)
+        self.common_component(&group.styles, "group_parent", view)
     }
 
     fn spacer(&self, control: Rc<ControlRenderData<Self, SpacerData>>) -> View {
-        self.custom_component(
+        self.common_component(
             &control.styles,
+            "spacer_parent",
             view! { <div style:height=control.data.height.as_ref()></div> }.into_view(),
         )
     }
@@ -85,7 +96,7 @@ impl FormStyle for GridFormStyle {
             H4 => view! { <h4 class="form_heading"> {title} </h4> }.into_view(),
         };
 
-        self.custom_component(&control.styles, view)
+        self.common_component(&control.styles, "heading_parent", view)
     }
 
     fn submit(
@@ -95,8 +106,9 @@ impl FormStyle for GridFormStyle {
     ) -> View {
         let title = move || value_getter.map(|v| v.get()).unwrap_or_default();
 
-        self.custom_component(
+        self.common_component(
             &control.styles,
+            "submit_parent",
             view! { <input type="submit" value=title class="form_submit"/> }.into_view(),
         )
     }
@@ -122,7 +134,7 @@ impl FormStyle for GridFormStyle {
         }
         .into_view();
 
-        self.custom_component(&control.styles, view)
+        self.common_component(&control.styles, "button_parent", view)
     }
 
     fn output(
@@ -131,7 +143,7 @@ impl FormStyle for GridFormStyle {
         value_getter: Option<Signal<String>>,
     ) -> View {
         let view = view! { <span>{move || value_getter.map(|g| g.get())}</span> }.into_view();
-        self.custom_component(&control.styles, view)
+        self.common_component(&control.styles, "output_parent", view)
     }
 
     fn hidden(
@@ -192,7 +204,7 @@ impl FormStyle for GridFormStyle {
         }
         .into_view();
 
-        self.custom_component(&control.styles, view)
+        self.common_component(&control.styles, "text_input_parent", view)
     }
 
     fn text_area(
@@ -237,7 +249,7 @@ impl FormStyle for GridFormStyle {
         }
         .into_view();
 
-        self.custom_component(&control.styles, view)
+        self.common_component(&control.styles, "text_area_parent", view)
     }
 
     fn radio_buttons(
@@ -293,7 +305,7 @@ impl FormStyle for GridFormStyle {
         }
         .into_view();
 
-        self.custom_component(&control.styles, view)
+        self.common_component(&control.styles, "radio_buttons_parent", view)
     }
 
     fn select(
@@ -352,7 +364,7 @@ impl FormStyle for GridFormStyle {
         }
         .into_view();
 
-        self.custom_component(&control.styles, view)
+        self.common_component(&control.styles, "select_parent", view)
     }
 
     fn checkbox(
@@ -390,7 +402,7 @@ impl FormStyle for GridFormStyle {
         }
         .into_view();
 
-        self.custom_component(&control.styles, view)
+        self.common_component(&control.styles, "checkbox_parent", view)
     }
 
     fn stepper(
@@ -424,7 +436,7 @@ impl FormStyle for GridFormStyle {
         }
         .into_view();
 
-        self.custom_component(&control.styles, view)
+        self.common_component(&control.styles, "stepper_parent", view)
     }
 
     fn slider(
@@ -458,6 +470,6 @@ impl FormStyle for GridFormStyle {
         }
         .into_view();
 
-        self.custom_component(&control.styles, view)
+        self.common_component(&control.styles, "slider_parent", view)
     }
 }
