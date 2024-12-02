@@ -100,8 +100,8 @@ impl ValidationState {
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub enum UpdateEvent {
     OnFocusout,
-    #[default]
     OnInput,
+    #[default]
     OnChange,
 }
 
