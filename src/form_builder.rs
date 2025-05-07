@@ -8,7 +8,13 @@ use crate::{
     styles::FormStyle,
 };
 use leptos::{
-    prelude::{AnyView, IntoAny, RwSignal, Show, Signal, With},
+    form::ActionForm,
+    prelude::{
+        create_effect, create_rw_signal, create_signal, Action, AnyView, Effect, GetUntracked,
+        IntoAny, RwSignal, ServerFnError, Set, Show, Signal, Track, Update, With, WithUntracked,
+        WriteSignal,
+    },
+    reactive::wrappers::write::{IntoSignalSetter, SignalSetter},
     server_fn::{client::Client, codec::PostUrl, request::ClientReq, ServerFn},
     *,
 };
@@ -155,8 +161,8 @@ impl<FD: FormToolData> FormBuilder<FD> {
                 // thus, we need to modify the validation function
                 let cx = self.cx.clone();
                 let new_validation_fn = move |fd: &FD| {
-                    let (fd_signal, _) = create_signal(fd.clone());
-                    if !show_when(fd_signal.into(), cx.clone()) {
+                    let fd_signal = Signal::stored(fd.clone());
+                    if !(show_when)(fd_signal, cx.clone()) {
                         return Ok(());
                     }
                     validation_fn(fd)
@@ -197,11 +203,11 @@ impl<FD: FormToolData> FormBuilder<FD> {
         } = control_data;
 
         let render_data = Arc::new(render_data);
-        let (validation_signal, validation_signal_set) = create_signal(ValidationState::Passed);
+        let (validation_signal, validation_signal_set) = signal(ValidationState::Passed);
         let validation_fn_clone = validation_fn.clone();
         let initial_value = unparse_fn(fd.with_untracked(|fd| getter(fd)));
-        let (value_getter, value_setter) = create_signal(initial_value);
-        create_effect(move |_| {
+        let (value_getter, value_setter) = signal(initial_value);
+        Effect::new(move |_| {
             fd.track();
             if validation_signal.get().is_parse_err() {
                 return;
@@ -283,7 +289,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
         let view = match show_when {
             Some(when) => {
                 let when = move || when(fd.into(), cx.clone());
-                view! { <Show when=when>{view.clone()}</Show> }
+                view! { <Show when=when>{view.clone()}</Show> }.into_any()
             }
             None => view(),
         };
@@ -342,12 +348,12 @@ impl<FD: FormToolData> FormBuilder<FD> {
         fs: FD::Style,
     ) -> Form<FD>
     where
-        ServFn: DeserializeOwned + ServerFn<InputEncoding = PostUrl> + 'static,
+        ServFn: DeserializeOwned + ServerFn<InputEncoding = PostUrl> + Send + Sync + 'static,
         <<ServFn::Client as Client<ServFn::Error>>::Request as ClientReq<ServFn::Error>>::FormData:
             From<FormData>,
         ServFn: From<FD>,
     {
-        let fd = create_rw_signal(fd);
+        let fd = RwSignal::new(fd);
         let fs = Arc::new(fs);
 
         let (views, validation_cbs): (Vec<_>, Vec<_>) = self
@@ -357,7 +363,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
             .unzip();
 
         let elements = fs.form_frame(ControlRenderData {
-            data: views.into_view(),
+            data: views.into_any(),
             styles: self.styles,
         });
 
@@ -381,7 +387,8 @@ impl<FD: FormToolData> FormBuilder<FD> {
             <ActionForm action=action on:submit=on_submit>
                 {elements}
             </ActionForm>
-        };
+        }
+        .into_any();
 
         Form {
             fd,
@@ -399,11 +406,11 @@ impl<FD: FormToolData> FormBuilder<FD> {
         fs: FD::Style,
     ) -> Form<FD>
     where
-        ServFn: DeserializeOwned + ServerFn<InputEncoding = PostUrl> + 'static,
+        ServFn: DeserializeOwned + ServerFn<InputEncoding = PostUrl> + Send + Sync + 'static,
         <<ServFn::Client as Client<ServFn::Error>>::Request as ClientReq<ServFn::Error>>::FormData:
             From<FormData>,
     {
-        let fd = create_rw_signal(fd);
+        let fd = RwSignal::new(fd);
         let fs = Arc::new(fs);
 
         let (views, validation_cbs): (Vec<_>, Vec<_>) = self
@@ -413,7 +420,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
             .unzip();
 
         let elements = fs.form_frame(ControlRenderData {
-            data: views.into_view(),
+            data: views.into_any(),
             styles: self.styles,
         });
 
@@ -434,7 +441,8 @@ impl<FD: FormToolData> FormBuilder<FD> {
             <ActionForm action=action on:submit=on_submit>
                 {elements}
             </ActionForm>
-        };
+        }
+        .into_any();
 
         Form {
             fd,

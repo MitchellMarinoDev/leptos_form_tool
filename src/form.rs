@@ -93,7 +93,7 @@ pub trait FormToolData: Clone + Send + Sync + 'static {
     /// This will need to be provided when building a form or a validator.
     /// Therefore, you will need to be able to replicate this context
     /// on the client for rendering and the server for validating.
-    type Context: 'static;
+    type Context: Send + Sync + 'static;
 
     /// Defines how the form should be laid out and how the data should be
     /// parsed and validated.
@@ -131,7 +131,7 @@ pub trait FormToolData: Clone + Send + Sync + 'static {
         context: Self::Context,
     ) -> Form<Self>
     where
-        ServFn: DeserializeOwned + ServerFn<InputEncoding = PostUrl> + 'static,
+        ServFn: DeserializeOwned + ServerFn<InputEncoding = PostUrl> + Send + Sync + 'static,
         <<ServFn::Client as Client<ServFn::Error>>::Request as ClientReq<ServFn::Error>>::FormData:
             From<FormData>,
         ServFn: From<Self>,
@@ -159,7 +159,7 @@ pub trait FormToolData: Clone + Send + Sync + 'static {
         context: Self::Context,
     ) -> Form<Self>
     where
-        ServFn: DeserializeOwned + ServerFn<InputEncoding = PostUrl> + 'static,
+        ServFn: DeserializeOwned + ServerFn<InputEncoding = PostUrl> + Send + Sync + 'static,
         <<ServFn::Client as Client<ServFn::Error>>::Request as ClientReq<ServFn::Error>>::FormData:
             From<FormData>,
     {

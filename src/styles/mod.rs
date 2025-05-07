@@ -19,7 +19,7 @@ use leptos::{
 /// Provides methods for rendering all the controls.
 /// This provider is in charge of figuring out what html elements should be
 /// rendered and how they should be styled.
-pub trait FormStyle: 'static {
+pub trait FormStyle: Send + Sync + 'static {
     /// The type of styling attributes that this [`FormStyle`] takes.
     ///
     /// These styling attributes can be applied to any of the controls.

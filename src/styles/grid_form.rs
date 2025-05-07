@@ -5,7 +5,7 @@ use crate::controls::{
     spacer::SpacerData, stepper::StepperData, submit::SubmitData, text_area::TextAreaData,
     text_input::TextInputData, ControlRenderData, UpdateEvent, ValidationState,
 };
-use leptos::prelude::*;
+use leptos::{prelude::*, reactive::wrappers::write::SignalSetter};
 use std::sync::Arc;
 use web_sys::MouseEvent;
 
@@ -76,7 +76,8 @@ impl FormStyle for GridFormStyle {
         self.common_component(
             &control.styles,
             "spacer_parent",
-            view! { <div style:height=control.data.height.as_ref()></div> }.into_any(),
+            view! { <div style:height=control.data.height.clone().unwrap_or_default()></div> }
+                .into_any(),
         )
     }
 

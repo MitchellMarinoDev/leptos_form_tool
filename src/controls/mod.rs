@@ -29,12 +29,12 @@ pub mod text_input;
 
 pub trait BuilderFn<B>: Fn(B) -> B {}
 pub trait BuilderCxFn<B, CX>: Fn(B, Arc<CX>) -> B {}
-pub trait ValidationFn<FD: ?Sized>: Fn(&FD) -> Result<(), String> + 'static {}
+pub trait ValidationFn<FD: ?Sized>: Fn(&FD) -> Result<(), String> + Send + Sync + 'static {}
 pub trait ValidationCb: Fn() -> bool + 'static {}
-pub trait ParseFn<CR, FDT>: Fn(CR) -> Result<FDT, String> + 'static {}
+pub trait ParseFn<CR, FDT>: Fn(CR) -> Result<FDT, String> + Send + Sync + 'static {}
 pub trait UnparseFn<CR, FDT>: Fn(FDT) -> CR + 'static {}
-pub trait FieldGetter<FD, FDT>: Fn(&FD) -> FDT + 'static {}
-pub trait FieldSetter<FD, FDT>: Fn(&mut FD, FDT) + 'static {}
+pub trait FieldGetter<FD, FDT>: Fn(&FD) -> FDT + Send + Sync + 'static {}
+pub trait FieldSetter<FD, FDT>: Fn(&mut FD, FDT) + Send + Sync + 'static {}
 pub trait ShowWhenFn<FD: 'static + Send + Sync, CX>:
     Fn(Signal<FD>, Arc<CX>) -> bool + 'static
 {
@@ -47,12 +47,15 @@ pub trait RenderFn<FS, FD: 'static>:
 // implement the traits for all valid types
 impl<B, T> BuilderFn<B> for T where T: Fn(B) -> B {}
 impl<B, CX, T> BuilderCxFn<B, CX> for T where T: Fn(B, Arc<CX>) -> B {}
-impl<FDT, T> ValidationFn<FDT> for T where T: Fn(&FDT) -> Result<(), String> + 'static {}
+impl<FDT, T> ValidationFn<FDT> for T where T: Fn(&FDT) -> Result<(), String> + Send + Sync + 'static {}
 impl<T> ValidationCb for T where T: Fn() -> bool + 'static {}
-impl<CR, FDT, F> ParseFn<CR, FDT> for F where F: Fn(CR) -> Result<FDT, String> + 'static {}
+impl<CR, FDT, F> ParseFn<CR, FDT> for F where
+    F: Fn(CR) -> Result<FDT, String> + Send + Sync + 'static
+{
+}
 impl<CR, FDT, F> UnparseFn<CR, FDT> for F where F: Fn(FDT) -> CR + 'static {}
-impl<FD, FDT, F> FieldGetter<FD, FDT> for F where F: Fn(&FD) -> FDT + 'static {}
-impl<FD, FDT, F> FieldSetter<FD, FDT> for F where F: Fn(&mut FD, FDT) + 'static {}
+impl<FD, FDT, F> FieldGetter<FD, FDT> for F where F: Fn(&FD) -> FDT + Send + Sync + 'static {}
+impl<FD, FDT, F> FieldSetter<FD, FDT> for F where F: Fn(&mut FD, FDT) + Send + Sync + 'static {}
 impl<FD: Send + Sync + 'static, CX, F> ShowWhenFn<FD, CX> for F where
     F: Fn(Signal<FD>, Arc<CX>) -> bool + 'static
 {
@@ -412,7 +415,7 @@ where
     /// The parse and unparse functions define how to turn what the user
     /// types in the form into what is stored in the form data struct and
     /// vice versa.
-    pub fn parse_from_msg(mut self, msg: impl ToString + 'static) -> Self {
+    pub fn parse_from_msg(mut self, msg: impl ToString + Send + Sync + 'static) -> Self {
         self.parse_fn = Some(Box::new(move |control_return_value| {
             FDT::try_from(control_return_value).map_err(|_| msg.to_string())
         }));
@@ -474,7 +477,7 @@ where
     /// The parse and unparse functions define how to turn what the user
     /// types in the form into what is stored in the form data struct and
     /// vice versa.
-    pub fn parse_string_msg(mut self, msg: impl ToString + 'static) -> Self {
+    pub fn parse_string_msg(mut self, msg: impl ToString + Send + Sync + 'static) -> Self {
         self.parse_fn = Some(Box::new(move |control_return_value| {
             control_return_value
                 .parse::<FDT>()
@@ -493,7 +496,7 @@ where
     /// The parse and unparse functions define how to turn what the user
     /// types in the form into what is stored in the form data struct and
     /// vice versa.
-    pub fn parse_trimmed_msg(mut self, msg: impl ToString + 'static) -> Self {
+    pub fn parse_trimmed_msg(mut self, msg: impl ToString + Send + Sync + 'static) -> Self {
         self.parse_fn = Some(Box::new(move |control_return_value| {
             control_return_value
                 .trim()
@@ -608,7 +611,7 @@ impl<FD: FormToolData, C: ValidatedControlData<FD>, FDT> ControlBuilder<FD, C, F
     /// field to help ensure that the day is a valid day of that month.
     pub fn validation_fn(
         mut self,
-        validation_fn: impl Fn(&FD) -> Result<(), String> + 'static,
+        validation_fn: impl Fn(&FD) -> Result<(), String> + Send + Sync + 'static,
     ) -> Self {
         self.validation_fn = Some(Arc::new(validation_fn));
         self

@@ -5,7 +5,7 @@ use std::fmt::Display;
 ///
 /// This is similar to [`ValidationFn`](crate::controls::ValidationFn)
 /// but takes a &str for the name of the field for improved error messages.
-type ValidationBuilderFn<T> = dyn Fn(&str, &T) -> Result<(), String> + 'static;
+type ValidationBuilderFn<T> = dyn Fn(&str, &T) -> Result<(), String> + Send + Sync + 'static;
 
 /// A helper builder that allows you to specify a validation function
 /// declaritivly
@@ -18,14 +18,14 @@ pub struct ValidationBuilder<FD: FormToolData, T: ?Sized + 'static> {
     /// The name of the field, for error messages.
     name: String,
     /// The getter function for the field to validate.
-    field_fn: Box<dyn Fn(&FD) -> &T + 'static>,
+    field_fn: Box<dyn Fn(&FD) -> &T + Send + Sync + 'static>,
     /// The functions to be called when validating.
     functions: Vec<Box<ValidationBuilderFn<T>>>,
 }
 
 impl<FD: FormToolData, T: ?Sized + 'static> ValidationBuilder<FD, T> {
     /// Creates a new empty [`ValidationBuilder`] on the given field.
-    pub fn for_field(field_fn: impl Fn(&FD) -> &T + 'static) -> Self {
+    pub fn for_field(field_fn: impl Fn(&FD) -> &T + Send + Sync + 'static) -> Self {
         ValidationBuilder {
             name: String::from("Field"),
             field_fn: Box::new(field_fn),
@@ -130,7 +130,9 @@ impl<FD: FormToolData> ValidationBuilder<FD, str> {
     }
 }
 
-impl<FD: FormToolData, T: PartialOrd<T> + Display + 'static> ValidationBuilder<FD, T> {
+impl<FD: FormToolData, T: PartialOrd<T> + Display + Send + Sync + 'static>
+    ValidationBuilder<FD, T>
+{
     /// Requires the value to be at least `min_value` according to
     /// `PartialOrd`.
     pub fn min_value(mut self, min_value: T) -> Self {
@@ -158,7 +160,7 @@ impl<FD: FormToolData, T: PartialOrd<T> + Display + 'static> ValidationBuilder<F
     }
 }
 
-impl<FD: FormToolData, T: PartialEq<T> + Display + 'static> ValidationBuilder<FD, T> {
+impl<FD: FormToolData, T: PartialEq<T> + Display + Send + Sync + 'static> ValidationBuilder<FD, T> {
     /// Requires the field to be in the provided whitelist.
     pub fn whitelist(mut self, whitelist: Vec<T>) -> Self {
         self.functions.push(Box::new(move |name, value| {

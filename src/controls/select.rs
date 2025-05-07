@@ -9,7 +9,8 @@ use leptos::{
 };
 use std::sync::Arc;
 
-type DynamicOptionsGetter<FD> = Arc<dyn Fn(RwSignal<FD>) -> Vec<(String, String)> + 'static>;
+type DynamicOptionsGetter<FD> =
+    Arc<dyn Fn(RwSignal<FD>) -> Vec<(String, String)> + Send + Sync + 'static>;
 /// Data used for building the select control.
 pub struct SelectBuildData<FD: FormToolData> {
     pub name: String,
@@ -201,7 +202,7 @@ impl<FD: FormToolData, FDT> ControlBuilder<FD, SelectBuildData<FD>, FDT> {
     /// This will overwrite any pervious options setting.
     pub fn with_dynamic_options(
         mut self,
-        derived_signal: impl Fn(RwSignal<FD>) -> Vec<String> + 'static,
+        derived_signal: impl Fn(RwSignal<FD>) -> Vec<String> + Send + Sync + 'static,
     ) -> Self {
         let derived_signal = move |fd| {
             derived_signal(fd)
@@ -219,7 +220,7 @@ impl<FD: FormToolData, FDT> ControlBuilder<FD, SelectBuildData<FD>, FDT> {
     /// This will overwrite any pervious options setting.
     pub fn with_dynamic_options_valued(
         mut self,
-        derived_signal: impl Fn(RwSignal<FD>) -> Vec<(String, String)> + 'static,
+        derived_signal: impl Fn(RwSignal<FD>) -> Vec<(String, String)> + Send + Sync + 'static,
     ) -> Self {
         self.data.dynamic_options = Some(Arc::new(derived_signal));
         self

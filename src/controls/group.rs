@@ -1,7 +1,7 @@
 use super::{ControlRenderData, ValidationCb};
 use crate::styles::FormStyle;
 use crate::{form::FormToolData, form_builder::FormBuilder};
-use leptos::prelude::{CollectView, IntoAny, RwSignal};
+use leptos::prelude::{IntoAny, RwSignal};
 use std::sync::Arc;
 
 impl<FD: FormToolData> FormBuilder<FD> {
