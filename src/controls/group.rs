@@ -1,9 +1,10 @@
 use std::rc::Rc;
 
+use leptos::prelude::{CollectView, RwSignal};
+
 use super::{ControlRenderData, ValidationCb};
 use crate::styles::FormStyle;
 use crate::{form::FormToolData, form_builder::FormBuilder};
-use leptos::{CollectView, RwSignal};
 
 impl<FD: FormToolData> FormBuilder<FD> {
     /// Creates a form group.

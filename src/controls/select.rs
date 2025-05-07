@@ -1,9 +1,13 @@
+use leptos::{
+    prelude::{AnyView, MaybeSignal, RwSignal, Signal},
+    reactive::wrappers::write::SignalSetter,
+};
+
 use super::{
     BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, ValidatedControlData,
     ValidationState,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{IntoSignal, MaybeSignal, RwSignal, Signal, SignalGet, SignalSetter, View};
 use std::rc::Rc;
 
 type DynamicOptionsGetter<FD> = Rc<dyn Fn(RwSignal<FD>) -> Vec<(String, String)> + 'static>;
@@ -69,14 +73,14 @@ impl<FD: FormToolData> ControlData<FD> for SelectBuildData<FD> {
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,
-    ) -> View {
+    ) -> AnyView {
         let options = control
             .data
             .dynamic_options
             .as_ref()
             .map(|d| {
                 let d = d.clone();
-                MaybeSignal::Dynamic((move || d(fd)).into_signal())
+                MaybeSignal::Dynamic(move || d(fd))
             })
             .unwrap_or(control.data.options.clone());
 

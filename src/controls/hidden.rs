@@ -1,9 +1,10 @@
+use leptos::prelude::{AnyView, Signal};
+
 use super::{
     BuilderCxFn, BuilderFn, ControlRenderData, GetterVanityControlData, VanityControlBuilder,
     VanityControlData,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{Signal, View};
 use std::rc::Rc;
 
 /// Data used for the hidden control.
@@ -18,7 +19,7 @@ impl<FD: FormToolData> VanityControlData<FD> for HiddenData {
         _fd: leptos::prelude::RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Option<Signal<String>>,
-    ) -> View {
+    ) -> AnyView {
         fs.hidden(control, value_getter)
     }
 }

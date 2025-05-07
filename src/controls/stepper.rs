@@ -1,9 +1,13 @@
+use leptos::{
+    prelude::{AnyView, MaybeSignal, RwSignal, Signal},
+    reactive::wrappers::write::SignalSetter,
+};
+
 use super::{
     BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, ValidatedControlData,
     ValidationState,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{MaybeSignal, RwSignal, Signal, SignalSetter, View};
 use std::rc::Rc;
 
 /// Data used for the stepper control.
@@ -27,7 +31,7 @@ impl<FD: FormToolData> ControlData<FD> for StepperData {
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,
-    ) -> View {
+    ) -> AnyView {
         fs.stepper(control, value_getter, value_setter, validation_state)
     }
 }

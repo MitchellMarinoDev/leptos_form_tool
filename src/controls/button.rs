@@ -1,7 +1,7 @@
 use super::{BuilderCxFn, BuilderFn, ControlRenderData, VanityControlBuilder};
 use super::{GetterVanityControlData, VanityControlData};
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{RwSignal, Signal, View};
+use leptos::prelude::{AnyView, RwSignal, Signal};
 use std::rc::Rc;
 use web_sys::MouseEvent;
 
@@ -35,7 +35,7 @@ impl<FD: FormToolData> VanityControlData<FD> for ButtonBuildData<FD> {
         fd: RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Option<Signal<String>>,
-    ) -> View {
+    ) -> AnyView {
         let action = control.data.action.as_ref().map(|a| {
             let a = a.clone();
             let action = move |ev: MouseEvent| a(ev, fd);

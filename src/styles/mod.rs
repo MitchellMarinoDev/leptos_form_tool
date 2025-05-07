@@ -6,7 +6,6 @@ use crate::controls::{
     spacer::SpacerData, stepper::StepperData, submit::SubmitData, text_area::TextAreaData,
     text_input::TextInputData, ControlRenderData, ValidationState,
 };
-use leptos::{Signal, SignalSetter, View};
 use std::rc::Rc;
 
 pub use grid_form::{GFStyleAttr, GridFormStyle};
@@ -29,7 +28,7 @@ pub trait FormStyle: 'static {
     ///
     /// Do NOT wrap it in an actual `form` element; any
     /// wrapping should be done with `div` or similar elements.
-    fn form_frame(&self, form: ControlRenderData<Self, View>) -> View;
+    fn form_frame(&self, form: ControlRenderData<Self, AnyView>) -> AnyView;
 
     /// Wraps the view of a custom component.
     ///
@@ -40,26 +39,26 @@ pub trait FormStyle: 'static {
     /// This method does not need to be called by the custom component, but
     /// the custom component may make use of this method for the
     /// aforementioned reasons.
-    fn custom_component(&self, style: &[Self::StylingAttributes], inner: View) -> View;
+    fn custom_component(&self, style: &[Self::StylingAttributes], inner: AnyView) -> AnyView;
 
     /// Renders a group.
     ///
     /// The inner view for the group's components is provided.
     /// This method should wrap the group in any visual grouping elements,
     /// and apply the styles.
-    fn group(&self, group: Rc<ControlRenderData<Self, View>>) -> View;
+    fn group(&self, group: Rc<ControlRenderData<Self, AnyView>>) -> AnyView;
 
     /// Renders a spacer.
     ///
     /// See [`SpacerData`].
-    fn spacer(&self, control: Rc<ControlRenderData<Self, SpacerData>>) -> View;
+    fn spacer(&self, control: Rc<ControlRenderData<Self, SpacerData>>) -> AnyView;
 
     /// Renders a heading for a section of the form.
     fn heading(
         &self,
         control: Rc<ControlRenderData<Self, HeadingData>>,
         value_getter: Option<Signal<String>>,
-    ) -> View;
+    ) -> AnyView;
 
     /// Renders a submit button.
     ///
@@ -68,7 +67,7 @@ pub trait FormStyle: 'static {
         &self,
         control: Rc<ControlRenderData<Self, SubmitData>>,
         value_getter: Option<Signal<String>>,
-    ) -> View;
+    ) -> AnyView;
 
     /// Renders a button.
     ///
@@ -77,7 +76,7 @@ pub trait FormStyle: 'static {
         &self,
         control: Rc<ControlRenderData<Self, ButtonData>>,
         value_getter: Option<Signal<String>>,
-    ) -> View;
+    ) -> AnyView;
 
     /// Renders some output text.
     ///
@@ -86,7 +85,7 @@ pub trait FormStyle: 'static {
         &self,
         control: Rc<ControlRenderData<Self, OutputData>>,
         value_getter: Option<Signal<String>>,
-    ) -> View;
+    ) -> AnyView;
 
     /// Renders a input control that should be hidden from the user.
     ///
@@ -95,7 +94,7 @@ pub trait FormStyle: 'static {
         &self,
         control: Rc<ControlRenderData<Self, HiddenData>>,
         value_getter: Option<Signal<String>>,
-    ) -> View;
+    ) -> AnyView;
 
     /// Renders a text input control.
     ///
@@ -106,7 +105,7 @@ pub trait FormStyle: 'static {
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
-    ) -> View;
+    ) -> AnyView;
 
     /// Renders a text area control.
     ///
@@ -117,7 +116,7 @@ pub trait FormStyle: 'static {
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
-    ) -> View;
+    ) -> AnyView;
 
     /// Renders a group of radio buttons.
     ///
@@ -128,7 +127,7 @@ pub trait FormStyle: 'static {
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
-    ) -> View;
+    ) -> AnyView;
 
     /// Renders a select (or dropdown) control.
     ///
@@ -139,7 +138,7 @@ pub trait FormStyle: 'static {
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
-    ) -> View;
+    ) -> AnyView;
 
     /// Renders a checkbox control.
     ///
@@ -149,7 +148,7 @@ pub trait FormStyle: 'static {
         control: Rc<ControlRenderData<Self, CheckboxData>>,
         value_getter: Signal<bool>,
         value_setter: SignalSetter<bool>,
-    ) -> View;
+    ) -> AnyView;
 
     /// Renders a stepper control.
     ///
@@ -160,7 +159,7 @@ pub trait FormStyle: 'static {
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
-    ) -> View;
+    ) -> AnyView;
 
     /// Renders a slider control.
     ///
@@ -171,5 +170,5 @@ pub trait FormStyle: 'static {
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
-    ) -> View;
+    ) -> AnyView;
 }

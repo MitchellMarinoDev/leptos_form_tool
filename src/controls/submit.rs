@@ -1,9 +1,10 @@
+use leptos::prelude::{AnyView, RwSignal, Signal};
+
 use super::{
     BuilderCxFn, BuilderFn, ControlRenderData, GetterVanityControlData, VanityControlBuilder,
     VanityControlData,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{prelude::Signal, RwSignal, View};
 use std::rc::Rc;
 
 /// Data used for the submit button control.
@@ -16,7 +17,7 @@ impl<FD: FormToolData> VanityControlData<FD> for SubmitData {
         _fd: RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Option<Signal<String>>,
-    ) -> View {
+    ) -> AnyView {
         fs.submit(control, value_getter)
     }
 }

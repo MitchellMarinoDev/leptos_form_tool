@@ -2,7 +2,7 @@ use super::{
     BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, ValidationState,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{RwSignal, Signal, SignalSetter, View};
+use leptos::{prelude::*, reactive::wrappers::write::SignalSetter};
 use std::rc::Rc;
 
 /// Data used for the checkbox control.
@@ -22,7 +22,7 @@ impl<FD: FormToolData> ControlData<FD> for CheckboxData {
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
         _validation_state: Signal<ValidationState>,
-    ) -> View {
+    ) -> AnyView {
         fs.checkbox(control, value_getter, value_setter)
     }
 }

@@ -1,8 +1,9 @@
+use leptos::prelude::{AnyView, RwSignal};
+
 use super::{
     BuilderCxFn, BuilderFn, ControlBuilder, ControlData, VanityControlBuilder, VanityControlData,
 };
 use crate::{FormBuilder, FormToolData};
-use leptos::{RwSignal, View};
 use std::rc::Rc;
 
 impl<FD: FormToolData> FormBuilder<FD> {
@@ -69,7 +70,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
     /// consider defining a custom component for this purpose.
     pub fn raw_view(
         mut self,
-        render_fn: impl Fn(Rc<FD::Style>, RwSignal<FD>, Rc<FD::Context>) -> View + 'static,
+        render_fn: impl Fn(Rc<FD::Style>, RwSignal<FD>, Rc<FD::Context>) -> AnyView + 'static,
     ) -> Self {
         let cx = self.cx.clone();
         let render_fn = move |fs: Rc<FD::Style>, fd: RwSignal<FD>| {

@@ -84,7 +84,7 @@ impl<FD: FormToolData> IntoView for Form<FD> {
 /// This trait defines a function that can be used to build all the data
 /// needed to physically lay out a form, and how that data should be parsed
 /// and validated.
-pub trait FormToolData: Clone + 'static {
+pub trait FormToolData: Clone + Send + Sync + 'static {
     /// The style that this form uses.
     type Style: FormStyle;
     /// The context that this form is rendered in.

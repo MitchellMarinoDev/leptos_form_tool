@@ -1,6 +1,15 @@
+use leptos::{
+    prelude::{AnyView, RwSignal, Signal},
+    reactive::wrappers::write::SignalSetter,
+};
+
 use crate::{form::FormToolData, styles::FormStyle};
-use leptos::{RwSignal, Signal, SignalSetter, View};
-use std::{fmt::Display, rc::Rc, str::FromStr};
+use std::{
+    fmt::Display,
+    marker::{Send, Sync},
+    rc::Rc,
+    str::FromStr,
+};
 
 pub mod button;
 pub mod checkbox;
@@ -26,9 +35,12 @@ pub trait ParseFn<CR, FDT>: Fn(CR) -> Result<FDT, String> + 'static {}
 pub trait UnparseFn<CR, FDT>: Fn(FDT) -> CR + 'static {}
 pub trait FieldGetter<FD, FDT>: Fn(&FD) -> FDT + 'static {}
 pub trait FieldSetter<FD, FDT>: Fn(&mut FD, FDT) + 'static {}
-pub trait ShowWhenFn<FD: 'static, CX>: Fn(Signal<FD>, Rc<CX>) -> bool + 'static {}
+pub trait ShowWhenFn<FD: 'static + Send + Sync, CX>:
+    Fn(Signal<FD>, Rc<CX>) -> bool + 'static
+{
+}
 pub trait RenderFn<FS, FD: 'static>:
-    FnOnce(Rc<FS>, RwSignal<FD>) -> (View, Option<Box<dyn ValidationCb>>) + 'static
+    FnOnce(Rc<FS>, RwSignal<FD>) -> (AnyView, Option<Box<dyn ValidationCb>>) + 'static
 {
 }
 
@@ -41,9 +53,12 @@ impl<CR, FDT, F> ParseFn<CR, FDT> for F where F: Fn(CR) -> Result<FDT, String> +
 impl<CR, FDT, F> UnparseFn<CR, FDT> for F where F: Fn(FDT) -> CR + 'static {}
 impl<FD, FDT, F> FieldGetter<FD, FDT> for F where F: Fn(&FD) -> FDT + 'static {}
 impl<FD, FDT, F> FieldSetter<FD, FDT> for F where F: Fn(&mut FD, FDT) + 'static {}
-impl<FD: 'static, CX, F> ShowWhenFn<FD, CX> for F where F: Fn(Signal<FD>, Rc<CX>) -> bool + 'static {}
+impl<FD: Send + Sync + 'static, CX, F> ShowWhenFn<FD, CX> for F where
+    F: Fn(Signal<FD>, Rc<CX>) -> bool + 'static
+{
+}
 impl<FS, FD: 'static, F> RenderFn<FS, FD> for F where
-    F: FnOnce(Rc<FS>, RwSignal<FD>) -> (View, Option<Box<dyn ValidationCb>>) + 'static
+    F: FnOnce(Rc<FS>, RwSignal<FD>) -> (AnyView, Option<Box<dyn ValidationCb>>) + 'static
 {
 }
 
@@ -107,22 +122,22 @@ pub enum UpdateEvent {
 
 /// A trait for the data needed to render an read-only control.
 pub trait VanityControlData<FD: FormToolData>: 'static {
-    /// Builds the control, returning the [`View`] that was built.
+    /// Builds the control, returning the [`AnyView`] that was built.
     fn render_control<FS: FormStyle>(
         fs: &FS,
         fd: RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Option<Signal<String>>,
-    ) -> View;
+    ) -> AnyView;
 }
 pub trait GetterVanityControlData<FD: FormToolData>: VanityControlData<FD> {}
 
 /// A trait for the data needed to render an interactive control.
 pub trait ControlData<FD: FormToolData>: 'static {
     /// This is the data type returned by this control. Usually a [`String`].
-    type ReturnType: Clone;
+    type ReturnType: Clone + Send + Sync;
 
-    /// Builds the control, returning the [`View`] that was built.
+    /// Builds the control, returning the [`AnyView`] that was built.
     fn render_control<FS: FormStyle>(
         fs: &FS,
         fd: RwSignal<FD>,
@@ -130,7 +145,7 @@ pub trait ControlData<FD: FormToolData>: 'static {
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,
-    ) -> View;
+    ) -> AnyView;
 }
 pub trait ValidatedControlData<FD: FormToolData>: ControlData<FD> {}
 

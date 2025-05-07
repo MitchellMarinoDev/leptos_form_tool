@@ -3,7 +3,7 @@ use super::{
     VanityControlData,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{prelude::Signal, View};
+use leptos::prelude::{AnyView, Signal};
 use std::rc::Rc;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Default)]
@@ -27,7 +27,7 @@ impl<FD: FormToolData> VanityControlData<FD> for HeadingData {
         _fd: leptos::prelude::RwSignal<FD>,
         control: Rc<ControlRenderData<FS, Self>>,
         value_getter: Option<Signal<String>>,
-    ) -> View {
+    ) -> AnyView {
         fs.heading(control, value_getter)
     }
 }

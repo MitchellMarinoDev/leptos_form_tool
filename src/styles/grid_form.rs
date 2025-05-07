@@ -5,7 +5,6 @@ use crate::controls::{
     spacer::SpacerData, stepper::StepperData, submit::SubmitData, text_area::TextAreaData,
     text_input::TextInputData, ControlRenderData, UpdateEvent, ValidationState,
 };
-use leptos::*;
 use std::rc::Rc;
 use web_sys::MouseEvent;
 

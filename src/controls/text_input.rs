@@ -1,9 +1,13 @@
+use leptos::{
+    prelude::{AnyView, RwSignal, Signal},
+    reactive::wrappers::write::SignalSetter,
+};
+
 use super::{
     BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, UpdateEvent,
     ValidatedControlData, ValidationState,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use leptos::{RwSignal, Signal, SignalSetter, View};
 use std::rc::Rc;
 
 /// Data used for the text input control.
@@ -38,7 +42,7 @@ impl<FD: FormToolData> ControlData<FD> for TextInputData {
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,
-    ) -> View {
+    ) -> AnyView {
         fs.text_input(control, value_getter, value_setter, validation_state)
     }
 }
