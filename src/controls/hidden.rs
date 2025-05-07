@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use leptos::prelude::{AnyView, Signal};
 
 use super::{
@@ -5,7 +7,6 @@ use super::{
     VanityControlData,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use std::rc::Rc;
 
 /// Data used for the hidden control.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -17,7 +18,7 @@ impl<FD: FormToolData> VanityControlData<FD> for HiddenData {
     fn render_control<FS: FormStyle>(
         fs: &FS,
         _fd: leptos::prelude::RwSignal<FD>,
-        control: Rc<ControlRenderData<FS, Self>>,
+        control: Arc<ControlRenderData<FS, Self>>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView {
         fs.hidden(control, value_getter)

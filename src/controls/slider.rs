@@ -1,22 +1,21 @@
-use leptos::{
-    prelude::{AnyView, MaybeSignal, RwSignal, Signal},
-    reactive::wrappers::write::SignalSetter,
-};
-
 use super::{
     BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, ValidationState,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use std::rc::Rc;
+use leptos::{
+    prelude::{AnyView, RwSignal, Signal},
+    reactive::wrappers::write::SignalSetter,
+};
+use std::sync::Arc;
 
 /// Data used for the slider control.
 #[derive(Default, Debug, Clone, PartialEq, Eq)]
 pub struct SliderData {
     pub name: String,
     pub label: Option<String>,
-    pub step: Option<MaybeSignal<String>>,
-    pub min: Option<MaybeSignal<String>>,
-    pub max: Option<MaybeSignal<String>>,
+    pub step: Option<Signal<String>>,
+    pub min: Option<Signal<String>>,
+    pub max: Option<Signal<String>>,
 }
 
 impl<FD: FormToolData> ControlData<FD> for SliderData {
@@ -26,7 +25,7 @@ impl<FD: FormToolData> ControlData<FD> for SliderData {
     fn render_control<FS: FormStyle>(
         fs: &FS,
         _fd: RwSignal<FD>,
-        control: Rc<ControlRenderData<FS, Self>>,
+        control: Arc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,
@@ -73,37 +72,37 @@ impl<FD: FormToolData, FDT> ControlBuilder<FD, SliderData, FDT> {
 
     /// Sets the step ammount.
     pub fn step(mut self, step: impl ToString) -> Self {
-        self.data.step = Some(MaybeSignal::Static(step.to_string()));
+        self.data.step = Some(Signal::stored(step.to_string()));
         self
     }
 
     /// Sets the step ammount to a signal.
     pub fn step_signal(mut self, step: Signal<String>) -> Self {
-        self.data.step = Some(MaybeSignal::Dynamic(step));
+        self.data.step = Some(step);
         self
     }
 
     /// Sets the minimum value for the slider.
     pub fn min(mut self, min: impl ToString) -> Self {
-        self.data.min = Some(MaybeSignal::Static(min.to_string()));
+        self.data.min = Some(Signal::stored(min.to_string()));
         self
     }
 
     /// Sets the minimum value for the slider to a signal.
     pub fn min_signal(mut self, min: Signal<String>) -> Self {
-        self.data.min = Some(MaybeSignal::Dynamic(min));
+        self.data.min = Some(min);
         self
     }
 
     /// Sets the maximum value for the slider.
     pub fn max(mut self, max: impl ToString) -> Self {
-        self.data.max = Some(MaybeSignal::Static(max.to_string()));
+        self.data.max = Some(Signal::stored(max.to_string()));
         self
     }
 
     /// Sets the maximum value for the slider to a signal.
     pub fn max_signal(mut self, max: Signal<String>) -> Self {
-        self.data.max = Some(MaybeSignal::Dynamic(max));
+        self.data.max = Some(max);
         self
     }
 }

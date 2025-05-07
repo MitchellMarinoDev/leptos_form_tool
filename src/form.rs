@@ -1,11 +1,12 @@
 use crate::{controls::ValidationFn, form_builder::FormBuilder, styles::FormStyle};
 use ev::SubmitEvent;
 use leptos::{
+    prelude::{Action, AnyView, GetUntracked, IntoAny, RwSignal, ServerFnError},
     server_fn::{client::Client, codec::PostUrl, request::ClientReq, ServerFn},
     *,
 };
 use serde::de::DeserializeOwned;
-use std::rc::Rc;
+use std::sync::Arc;
 use web_sys::FormData;
 
 /// A type that can be used to validate the form data.
@@ -13,7 +14,7 @@ use web_sys::FormData;
 /// This can be useful to use the same validation logic on the front
 /// end and backend without duplicating the logic.
 pub struct FormValidator<FD> {
-    pub(crate) validations: Vec<Rc<dyn ValidationFn<FD>>>,
+    pub(crate) validations: Vec<Arc<dyn ValidationFn<FD>>>,
 }
 
 impl<FD: FormToolData> FormValidator<FD> {
@@ -38,8 +39,8 @@ pub struct Form<FD: FormToolData> {
     /// The form data signal.
     pub fd: RwSignal<FD>,
     /// The list of validations
-    pub(crate) validations: Vec<Rc<dyn ValidationFn<FD>>>,
-    pub(crate) view: View,
+    pub(crate) validations: Vec<Arc<dyn ValidationFn<FD>>>,
+    pub(crate) view: AnyView,
 }
 
 impl<FD: FormToolData> Form<FD> {
@@ -57,12 +58,12 @@ impl<FD: FormToolData> Form<FD> {
     }
 
     /// Gets the view associated with this [`Form`].
-    pub fn view(&self) -> View {
+    pub fn view(&self) -> AnyView {
         self.view.clone()
     }
 
     /// Splits this [`Form`] into it's parts.
-    pub fn to_parts(self) -> (RwSignal<FD>, FormValidator<FD>, View) {
+    pub fn to_parts(self) -> (RwSignal<FD>, FormValidator<FD>, AnyView) {
         (
             self.fd,
             FormValidator {
@@ -73,8 +74,8 @@ impl<FD: FormToolData> Form<FD> {
     }
 }
 
-impl<FD: FormToolData> IntoView for Form<FD> {
-    fn into_view(self) -> View {
+impl<FD: FormToolData> IntoAny for Form<FD> {
+    fn into_any(self) -> AnyView {
         self.view()
     }
 }

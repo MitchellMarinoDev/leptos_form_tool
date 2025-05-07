@@ -4,7 +4,7 @@ use super::{
     BuilderCxFn, BuilderFn, ControlBuilder, ControlData, VanityControlBuilder, VanityControlData,
 };
 use crate::{FormBuilder, FormToolData};
-use std::rc::Rc;
+use std::sync::Arc;
 
 impl<FD: FormToolData> FormBuilder<FD> {
     /// Builds a custom component and adds it to the form.
@@ -70,10 +70,10 @@ impl<FD: FormToolData> FormBuilder<FD> {
     /// consider defining a custom component for this purpose.
     pub fn raw_view(
         mut self,
-        render_fn: impl Fn(Rc<FD::Style>, RwSignal<FD>, Rc<FD::Context>) -> AnyView + 'static,
+        render_fn: impl Fn(Arc<FD::Style>, RwSignal<FD>, Arc<FD::Context>) -> AnyView + 'static,
     ) -> Self {
         let cx = self.cx.clone();
-        let render_fn = move |fs: Rc<FD::Style>, fd: RwSignal<FD>| {
+        let render_fn = move |fs: Arc<FD::Style>, fd: RwSignal<FD>| {
             let view = render_fn(fs, fd, cx);
             (view, None)
         };

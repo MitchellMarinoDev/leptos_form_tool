@@ -5,7 +5,7 @@ use super::{
     VanityControlData,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// Data used for the output control.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -15,7 +15,7 @@ impl<FD: FormToolData> VanityControlData<FD> for OutputData {
     fn render_control<FS: FormStyle>(
         fs: &FS,
         _fd: RwSignal<FD>,
-        control: Rc<ControlRenderData<FS, Self>>,
+        control: Arc<ControlRenderData<FS, Self>>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView {
         fs.output(control, value_getter)

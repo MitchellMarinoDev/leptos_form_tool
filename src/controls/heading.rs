@@ -4,7 +4,7 @@ use super::{
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
 use leptos::prelude::{AnyView, Signal};
-use std::rc::Rc;
+use std::sync::Arc;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, PartialOrd, Ord, Default)]
 pub enum HeadingLevel {
@@ -25,7 +25,7 @@ impl<FD: FormToolData> VanityControlData<FD> for HeadingData {
     fn render_control<FS: FormStyle>(
         fs: &FS,
         _fd: leptos::prelude::RwSignal<FD>,
-        control: Rc<ControlRenderData<FS, Self>>,
+        control: Arc<ControlRenderData<FS, Self>>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView {
         fs.heading(control, value_getter)
@@ -52,7 +52,7 @@ impl<FD: FormToolData> VanityControlBuilder<FD, HeadingData> {
     /// Sets the title of this heading.
     pub fn title(mut self, title: impl ToString) -> Self {
         let title = title.to_string();
-        self.getter = Some(Rc::new(move |_| title.clone()));
+        self.getter = Some(Arc::new(move |_| title.clone()));
         self
     }
 

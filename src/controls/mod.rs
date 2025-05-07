@@ -7,8 +7,8 @@ use crate::{form::FormToolData, styles::FormStyle};
 use std::{
     fmt::Display,
     marker::{Send, Sync},
-    rc::Rc,
     str::FromStr,
+    sync::Arc,
 };
 
 pub mod button;
@@ -28,7 +28,7 @@ pub mod text_area;
 pub mod text_input;
 
 pub trait BuilderFn<B>: Fn(B) -> B {}
-pub trait BuilderCxFn<B, CX>: Fn(B, Rc<CX>) -> B {}
+pub trait BuilderCxFn<B, CX>: Fn(B, Arc<CX>) -> B {}
 pub trait ValidationFn<FD: ?Sized>: Fn(&FD) -> Result<(), String> + 'static {}
 pub trait ValidationCb: Fn() -> bool + 'static {}
 pub trait ParseFn<CR, FDT>: Fn(CR) -> Result<FDT, String> + 'static {}
@@ -36,17 +36,17 @@ pub trait UnparseFn<CR, FDT>: Fn(FDT) -> CR + 'static {}
 pub trait FieldGetter<FD, FDT>: Fn(&FD) -> FDT + 'static {}
 pub trait FieldSetter<FD, FDT>: Fn(&mut FD, FDT) + 'static {}
 pub trait ShowWhenFn<FD: 'static + Send + Sync, CX>:
-    Fn(Signal<FD>, Rc<CX>) -> bool + 'static
+    Fn(Signal<FD>, Arc<CX>) -> bool + 'static
 {
 }
 pub trait RenderFn<FS, FD: 'static>:
-    FnOnce(Rc<FS>, RwSignal<FD>) -> (AnyView, Option<Box<dyn ValidationCb>>) + 'static
+    FnOnce(Arc<FS>, RwSignal<FD>) -> (AnyView, Option<Box<dyn ValidationCb>>) + 'static
 {
 }
 
 // implement the traits for all valid types
 impl<B, T> BuilderFn<B> for T where T: Fn(B) -> B {}
-impl<B, CX, T> BuilderCxFn<B, CX> for T where T: Fn(B, Rc<CX>) -> B {}
+impl<B, CX, T> BuilderCxFn<B, CX> for T where T: Fn(B, Arc<CX>) -> B {}
 impl<FDT, T> ValidationFn<FDT> for T where T: Fn(&FDT) -> Result<(), String> + 'static {}
 impl<T> ValidationCb for T where T: Fn() -> bool + 'static {}
 impl<CR, FDT, F> ParseFn<CR, FDT> for F where F: Fn(CR) -> Result<FDT, String> + 'static {}
@@ -54,11 +54,11 @@ impl<CR, FDT, F> UnparseFn<CR, FDT> for F where F: Fn(FDT) -> CR + 'static {}
 impl<FD, FDT, F> FieldGetter<FD, FDT> for F where F: Fn(&FD) -> FDT + 'static {}
 impl<FD, FDT, F> FieldSetter<FD, FDT> for F where F: Fn(&mut FD, FDT) + 'static {}
 impl<FD: Send + Sync + 'static, CX, F> ShowWhenFn<FD, CX> for F where
-    F: Fn(Signal<FD>, Rc<CX>) -> bool + 'static
+    F: Fn(Signal<FD>, Arc<CX>) -> bool + 'static
 {
 }
 impl<FS, FD: 'static, F> RenderFn<FS, FD> for F where
-    F: FnOnce(Rc<FS>, RwSignal<FD>) -> (AnyView, Option<Box<dyn ValidationCb>>) + 'static
+    F: FnOnce(Arc<FS>, RwSignal<FD>) -> (AnyView, Option<Box<dyn ValidationCb>>) + 'static
 {
 }
 
@@ -126,7 +126,7 @@ pub trait VanityControlData<FD: FormToolData>: 'static {
     fn render_control<FS: FormStyle>(
         fs: &FS,
         fd: RwSignal<FD>,
-        control: Rc<ControlRenderData<FS, Self>>,
+        control: Arc<ControlRenderData<FS, Self>>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView;
 }
@@ -141,7 +141,7 @@ pub trait ControlData<FD: FormToolData>: 'static {
     fn render_control<FS: FormStyle>(
         fs: &FS,
         fd: RwSignal<FD>,
-        control: Rc<ControlRenderData<FS, Self>>,
+        control: Arc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,
@@ -159,13 +159,13 @@ pub struct ControlRenderData<FS: FormStyle + ?Sized, C: ?Sized> {
 pub struct VanityControlBuilder<FD: FormToolData, C: VanityControlData<FD>> {
     pub(crate) style_attributes: Vec<<FD::Style as FormStyle>::StylingAttributes>,
     pub data: C,
-    pub(crate) getter: Option<Rc<dyn FieldGetter<FD, String>>>,
+    pub(crate) getter: Option<Arc<dyn FieldGetter<FD, String>>>,
     pub(crate) show_when: Option<Box<dyn ShowWhenFn<FD, FD::Context>>>,
 }
 
 pub(crate) struct BuiltVanityControlData<FD: FormToolData, C: VanityControlData<FD>> {
     pub(crate) render_data: ControlRenderData<FD::Style, C>,
-    pub(crate) getter: Option<Rc<dyn FieldGetter<FD, String>>>,
+    pub(crate) getter: Option<Arc<dyn FieldGetter<FD, String>>>,
     pub(crate) show_when: Option<Box<dyn ShowWhenFn<FD, FD::Context>>>,
 }
 
@@ -197,7 +197,7 @@ impl<FD: FormToolData, C: VanityControlData<FD>> VanityControlBuilder<FD, C> {
     /// Validations for components that are not shown DO NOT run.
     pub fn show_when(
         mut self,
-        when: impl Fn(Signal<FD>, Rc<FD::Context>) -> bool + 'static,
+        when: impl Fn(Signal<FD>, Arc<FD::Context>) -> bool + 'static,
     ) -> Self {
         self.show_when = Some(Box::new(when));
         self
@@ -217,7 +217,7 @@ impl<FD: FormToolData, C: GetterVanityControlData<FD>> VanityControlBuilder<FD, 
     ///
     /// Setting this getter field is NOT required for vanity controls like this one.
     pub fn getter(mut self, getter: impl FieldGetter<FD, String>) -> Self {
-        self.getter = Some(Rc::new(getter));
+        self.getter = Some(Arc::new(getter));
         self
     }
 }
@@ -249,23 +249,23 @@ impl Display for ControlBuildError {
 /// The data returned from a control's build function.
 pub(crate) struct BuiltControlData<FD: FormToolData, C: ControlData<FD>, FDT> {
     pub(crate) render_data: ControlRenderData<FD::Style, C>,
-    pub(crate) getter: Rc<dyn FieldGetter<FD, FDT>>,
-    pub(crate) setter: Rc<dyn FieldSetter<FD, FDT>>,
+    pub(crate) getter: Arc<dyn FieldGetter<FD, FDT>>,
+    pub(crate) setter: Arc<dyn FieldSetter<FD, FDT>>,
     pub(crate) parse_fn: Box<dyn ParseFn<C::ReturnType, FDT>>,
     pub(crate) unparse_fn: Box<dyn UnparseFn<C::ReturnType, FDT>>,
-    pub(crate) validation_fn: Option<Rc<dyn ValidationFn<FD>>>,
-    pub(crate) show_when: Option<Rc<dyn ShowWhenFn<FD, FD::Context>>>,
+    pub(crate) validation_fn: Option<Arc<dyn ValidationFn<FD>>>,
+    pub(crate) show_when: Option<Arc<dyn ShowWhenFn<FD, FD::Context>>>,
 }
 
 /// A builder for a interactive control.
 pub struct ControlBuilder<FD: FormToolData, C: ControlData<FD>, FDT> {
-    pub(crate) getter: Option<Rc<dyn FieldGetter<FD, FDT>>>,
-    pub(crate) setter: Option<Rc<dyn FieldSetter<FD, FDT>>>,
+    pub(crate) getter: Option<Arc<dyn FieldGetter<FD, FDT>>>,
+    pub(crate) setter: Option<Arc<dyn FieldSetter<FD, FDT>>>,
     pub(crate) parse_fn: Option<Box<dyn ParseFn<C::ReturnType, FDT>>>,
     pub(crate) unparse_fn: Option<Box<dyn UnparseFn<C::ReturnType, FDT>>>,
-    pub(crate) validation_fn: Option<Rc<dyn ValidationFn<FD>>>,
+    pub(crate) validation_fn: Option<Arc<dyn ValidationFn<FD>>>,
     pub(crate) style_attributes: Vec<<FD::Style as FormStyle>::StylingAttributes>,
-    pub(crate) show_when: Option<Rc<dyn ShowWhenFn<FD, FD::Context>>>,
+    pub(crate) show_when: Option<Arc<dyn ShowWhenFn<FD, FD::Context>>>,
     pub data: C,
 }
 
@@ -324,9 +324,9 @@ impl<FD: FormToolData, C: ControlData<FD>, FDT> ControlBuilder<FD, C, FDT> {
     /// Validations for components that are not shown DO NOT run.
     pub fn show_when(
         mut self,
-        when: impl Fn(Signal<FD>, Rc<FD::Context>) -> bool + 'static,
+        when: impl Fn(Signal<FD>, Arc<FD::Context>) -> bool + 'static,
     ) -> Self {
-        self.show_when = Some(Rc::new(when));
+        self.show_when = Some(Arc::new(when));
         self
     }
 
@@ -337,7 +337,7 @@ impl<FD: FormToolData, C: ControlData<FD>, FDT> ControlBuilder<FD, C, FDT> {
     ///
     /// Setting this getter field is required.
     pub fn getter(mut self, getter: impl FieldGetter<FD, FDT>) -> Self {
-        self.getter = Some(Rc::new(getter));
+        self.getter = Some(Arc::new(getter));
         self
     }
 
@@ -348,7 +348,7 @@ impl<FD: FormToolData, C: ControlData<FD>, FDT> ControlBuilder<FD, C, FDT> {
     ///
     /// Setting this setter field is required.
     pub fn setter(mut self, setter: impl FieldSetter<FD, FDT>) -> Self {
-        self.setter = Some(Rc::new(setter));
+        self.setter = Some(Arc::new(setter));
         self
     }
 
@@ -610,7 +610,7 @@ impl<FD: FormToolData, C: ValidatedControlData<FD>, FDT> ControlBuilder<FD, C, F
         mut self,
         validation_fn: impl Fn(&FD) -> Result<(), String> + 'static,
     ) -> Self {
-        self.validation_fn = Some(Rc::new(validation_fn));
+        self.validation_fn = Some(Arc::new(validation_fn));
         self
     }
 }

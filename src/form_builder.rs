@@ -8,21 +8,21 @@ use crate::{
     styles::FormStyle,
 };
 use leptos::{
+    prelude::{AnyView, IntoAny, RwSignal, Show, Signal, With},
     server_fn::{client::Client, codec::PostUrl, request::ClientReq, ServerFn},
     *,
 };
-use leptos_router::{ActionForm, Form};
 use serde::de::DeserializeOwned;
-use std::rc::Rc;
+use std::sync::Arc;
 use web_sys::{FormData, SubmitEvent};
 
 /// A builder for laying out forms.
 ///
 /// This builder allows you to specify what components should make up the form.
 pub struct FormBuilder<FD: FormToolData> {
-    pub(crate) cx: Rc<FD::Context>,
+    pub(crate) cx: Arc<FD::Context>,
     /// The list of [`ValidationFn`]s.
-    pub(crate) validations: Vec<Rc<dyn ValidationFn<FD>>>,
+    pub(crate) validations: Vec<Arc<dyn ValidationFn<FD>>>,
     /// The list of functions that will render the form.
     pub(crate) render_fns: Vec<Box<dyn RenderFn<FD::Style, FD>>>,
     /// The list of styling attributes applied on the form level.
@@ -33,16 +33,16 @@ impl<FD: FormToolData> FormBuilder<FD> {
     /// Creates a new [`FormBuilder`]
     pub(crate) fn new(cx: FD::Context) -> Self {
         FormBuilder {
-            cx: Rc::new(cx),
+            cx: Arc::new(cx),
             validations: Vec::new(),
             render_fns: Vec::new(),
             styles: Vec::new(),
         }
     }
 
-    /// Creates a new [`FormBuilder`] with the given Rc'ed context, for
+    /// Creates a new [`FormBuilder`] with the given Arc'ed context, for
     //// building a form group.
-    pub(crate) fn new_group(cx: Rc<FD::Context>) -> Self {
+    pub(crate) fn new_group(cx: Arc<FD::Context>) -> Self {
         FormBuilder {
             cx,
             validations: Vec::new(),
@@ -113,17 +113,17 @@ impl<FD: FormToolData> FormBuilder<FD> {
         } = vanity_control.build();
 
         let cx = self.cx.clone();
-        let render_fn = move |fs: Rc<FD::Style>, fd: RwSignal<FD>| {
-            let render_data = Rc::new(render_data);
+        let render_fn = move |fs: Arc<FD::Style>, fd: RwSignal<FD>| {
+            let render_data = Arc::new(render_data);
             let value_getter =
-                getter.map(|getter| (move || fd.with(|fd| getter(fd))).into_signal());
+                getter.map(|getter| Signal::derive(move || fd.with(|fd| getter(fd))));
             let view = move || {
                 VanityControlData::render_control(&*fs, fd, render_data.clone(), value_getter)
             };
             let view = match show_when {
                 Some(when) => {
                     let when = move || when(fd.into(), cx.clone());
-                    view! { <Show when=when>{view.clone()}</Show> }
+                    view! { <Show when=when>{view.clone()}</Show> }.into_any()
                 }
                 None => view(),
             };
@@ -161,7 +161,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
                     }
                     validation_fn(fd)
                 };
-                Rc::new(new_validation_fn)
+                Arc::new(new_validation_fn)
             } else {
                 validation_fn
             };
@@ -170,7 +170,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
         }
 
         let cx = self.cx.clone();
-        let render_fn = move |fs: Rc<FD::Style>, fd: RwSignal<FD>| {
+        let render_fn = move |fs: Arc<FD::Style>, fd: RwSignal<FD>| {
             let (view, cb) = Self::build_control_view(fd, fs, built_control_data, cx);
             (view, Some(cb))
         };
@@ -182,10 +182,10 @@ impl<FD: FormToolData> FormBuilder<FD> {
     /// the view.
     fn build_control_view<C: ControlData<FD>, FDT: 'static>(
         fd: RwSignal<FD>,
-        fs: Rc<FD::Style>,
+        fs: Arc<FD::Style>,
         control_data: BuiltControlData<FD, C, FDT>,
-        cx: Rc<FD::Context>,
-    ) -> (View, Box<dyn ValidationCb>) {
+        cx: Arc<FD::Context>,
+    ) -> (AnyView, Box<dyn ValidationCb>) {
         let BuiltControlData {
             render_data,
             getter,
@@ -196,7 +196,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
             show_when,
         } = control_data;
 
-        let render_data = Rc::new(render_data);
+        let render_data = Arc::new(render_data);
         let (validation_signal, validation_signal_set) = create_signal(ValidationState::Passed);
         let validation_fn_clone = validation_fn.clone();
         let initial_value = unparse_fn(fd.with_untracked(|fd| getter(fd)));
@@ -292,10 +292,10 @@ impl<FD: FormToolData> FormBuilder<FD> {
 
     /// Helper for creating a setter function.
     fn create_value_setter<CRT: 'static, FDT: 'static>(
-        validation_fn: Option<Rc<dyn ValidationFn<FD>>>,
+        validation_fn: Option<Arc<dyn ValidationFn<FD>>>,
         validation_signal_set: WriteSignal<ValidationState>,
         parse_fn: Box<dyn ParseFn<CRT, FDT>>,
-        setter: Rc<dyn FieldSetter<FD, FDT>>,
+        setter: Arc<dyn FieldSetter<FD, FDT>>,
         fd: RwSignal<FD>,
     ) -> SignalSetter<CRT> {
         let value_setter = move |value| {
@@ -348,7 +348,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
         ServFn: From<FD>,
     {
         let fd = create_rw_signal(fd);
-        let fs = Rc::new(fs);
+        let fs = Arc::new(fs);
 
         let (views, validation_cbs): (Vec<_>, Vec<_>) = self
             .render_fns
@@ -404,7 +404,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
             From<FormData>,
     {
         let fd = create_rw_signal(fd);
-        let fs = Rc::new(fs);
+        let fs = Arc::new(fs);
 
         let (views, validation_cbs): (Vec<_>, Vec<_>) = self
             .render_fns
@@ -452,7 +452,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
         fs: FD::Style,
     ) -> Form<FD> {
         let fd = create_rw_signal(fd);
-        let fs = Rc::new(fs);
+        let fs = Arc::new(fs);
 
         let (views, validation_cbs): (Vec<_>, Vec<_>) = self
             .render_fns
@@ -494,7 +494,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
     /// builds just the controls of the form.
     pub(crate) fn build_form_controls(self, fd: FD, fs: FD::Style) -> Form<FD> {
         let fd = create_rw_signal(fd);
-        let fs = Rc::new(fs);
+        let fs = Arc::new(fs);
 
         let (views, _validation_cbs): (Vec<_>, Vec<_>) = self
             .render_fns

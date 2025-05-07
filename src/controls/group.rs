@@ -1,10 +1,8 @@
-use std::rc::Rc;
-
-use leptos::prelude::{CollectView, RwSignal};
-
 use super::{ControlRenderData, ValidationCb};
 use crate::styles::FormStyle;
 use crate::{form::FormToolData, form_builder::FormBuilder};
+use leptos::prelude::{CollectView, IntoAny, RwSignal};
+use std::sync::Arc;
 
 impl<FD: FormToolData> FormBuilder<FD> {
     /// Creates a form group.
@@ -19,15 +17,15 @@ impl<FD: FormToolData> FormBuilder<FD> {
             self.validations.push(validation);
         }
 
-        let render_fn = move |fs: Rc<FD::Style>, fd: RwSignal<FD>| {
+        let render_fn = move |fs: Arc<FD::Style>, fd: RwSignal<FD>| {
             let (views, validation_cbs): (Vec<_>, Vec<_>) = group_builder
                 .render_fns
                 .into_iter()
                 .map(|r_fn| r_fn(fs.clone(), fd))
                 .unzip();
 
-            let render_data = Rc::new(ControlRenderData {
-                data: views.collect_view(),
+            let render_data = Arc::new(ControlRenderData {
+                data: views.into_any(),
                 styles: group_builder.styles,
             });
 

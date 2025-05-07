@@ -1,14 +1,13 @@
-use leptos::{
-    prelude::{AnyView, RwSignal, Signal},
-    reactive::wrappers::write::SignalSetter,
-};
-
 use super::{
     BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, ValidatedControlData,
     ValidationState,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use std::rc::Rc;
+use leptos::{
+    prelude::{AnyView, RwSignal, Signal},
+    reactive::wrappers::write::SignalSetter,
+};
+use std::sync::Arc;
 
 /// Data used for the radio buttons control.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -27,7 +26,7 @@ impl<FD: FormToolData> ControlData<FD> for RadioButtonsData {
     fn render_control<FS: FormStyle>(
         fs: &FS,
         _fd: RwSignal<FD>,
-        control: Rc<ControlRenderData<FS, Self>>,
+        control: Arc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,

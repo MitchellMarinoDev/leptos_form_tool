@@ -2,7 +2,7 @@ use leptos::prelude::{AnyView, RwSignal, Signal};
 
 use super::{BuilderCxFn, BuilderFn, ControlRenderData, VanityControlBuilder, VanityControlData};
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use std::rc::Rc;
+use std::sync::Arc;
 
 /// Data used for the spacer control.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -14,7 +14,7 @@ impl<FD: FormToolData> VanityControlData<FD> for SpacerData {
     fn render_control<FS: FormStyle>(
         fs: &FS,
         _fd: RwSignal<FD>,
-        control: Rc<ControlRenderData<FS, Self>>,
+        control: Arc<ControlRenderData<FS, Self>>,
         _value_getter: Option<Signal<String>>,
     ) -> AnyView {
         fs.spacer(control)

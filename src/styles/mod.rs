@@ -1,14 +1,18 @@
 mod grid_form;
 
+use std::sync::Arc;
+
 use crate::controls::{
     button::ButtonData, checkbox::CheckboxData, heading::HeadingData, hidden::HiddenData,
     output::OutputData, radio_buttons::RadioButtonsData, select::SelectData, slider::SliderData,
     spacer::SpacerData, stepper::StepperData, submit::SubmitData, text_area::TextAreaData,
     text_input::TextInputData, ControlRenderData, ValidationState,
 };
-use std::rc::Rc;
-
 pub use grid_form::{GFStyleAttr, GridFormStyle};
+use leptos::{
+    prelude::{AnyView, Signal},
+    reactive::wrappers::write::SignalSetter,
+};
 
 /// Defines a way to style a form.
 ///
@@ -46,17 +50,17 @@ pub trait FormStyle: 'static {
     /// The inner view for the group's components is provided.
     /// This method should wrap the group in any visual grouping elements,
     /// and apply the styles.
-    fn group(&self, group: Rc<ControlRenderData<Self, AnyView>>) -> AnyView;
+    fn group(&self, group: Arc<ControlRenderData<Self, AnyView>>) -> AnyView;
 
     /// Renders a spacer.
     ///
     /// See [`SpacerData`].
-    fn spacer(&self, control: Rc<ControlRenderData<Self, SpacerData>>) -> AnyView;
+    fn spacer(&self, control: Arc<ControlRenderData<Self, SpacerData>>) -> AnyView;
 
     /// Renders a heading for a section of the form.
     fn heading(
         &self,
-        control: Rc<ControlRenderData<Self, HeadingData>>,
+        control: Arc<ControlRenderData<Self, HeadingData>>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView;
 
@@ -65,7 +69,7 @@ pub trait FormStyle: 'static {
     /// See [`SubmitData`].
     fn submit(
         &self,
-        control: Rc<ControlRenderData<Self, SubmitData>>,
+        control: Arc<ControlRenderData<Self, SubmitData>>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView;
 
@@ -74,7 +78,7 @@ pub trait FormStyle: 'static {
     /// See [`ButtonData`]
     fn button(
         &self,
-        control: Rc<ControlRenderData<Self, ButtonData>>,
+        control: Arc<ControlRenderData<Self, ButtonData>>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView;
 
@@ -83,7 +87,7 @@ pub trait FormStyle: 'static {
     /// See [`OutputData`].
     fn output(
         &self,
-        control: Rc<ControlRenderData<Self, OutputData>>,
+        control: Arc<ControlRenderData<Self, OutputData>>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView;
 
@@ -92,7 +96,7 @@ pub trait FormStyle: 'static {
     /// See [`HiddenData`].
     fn hidden(
         &self,
-        control: Rc<ControlRenderData<Self, HiddenData>>,
+        control: Arc<ControlRenderData<Self, HiddenData>>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView;
 
@@ -101,7 +105,7 @@ pub trait FormStyle: 'static {
     /// See [`TextInputData`].
     fn text_input(
         &self,
-        control: Rc<ControlRenderData<Self, TextInputData>>,
+        control: Arc<ControlRenderData<Self, TextInputData>>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
@@ -112,7 +116,7 @@ pub trait FormStyle: 'static {
     /// See [`TextAreaData`].
     fn text_area(
         &self,
-        control: Rc<ControlRenderData<Self, TextAreaData>>,
+        control: Arc<ControlRenderData<Self, TextAreaData>>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
@@ -123,7 +127,7 @@ pub trait FormStyle: 'static {
     /// See [`RadioButtonsData`].
     fn radio_buttons(
         &self,
-        control: Rc<ControlRenderData<Self, RadioButtonsData>>,
+        control: Arc<ControlRenderData<Self, RadioButtonsData>>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
@@ -134,7 +138,7 @@ pub trait FormStyle: 'static {
     /// See [`SelectData`].
     fn select(
         &self,
-        control: Rc<ControlRenderData<Self, SelectData>>,
+        control: Arc<ControlRenderData<Self, SelectData>>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
@@ -145,7 +149,7 @@ pub trait FormStyle: 'static {
     /// See [`CheckboxData`].
     fn checkbox(
         &self,
-        control: Rc<ControlRenderData<Self, CheckboxData>>,
+        control: Arc<ControlRenderData<Self, CheckboxData>>,
         value_getter: Signal<bool>,
         value_setter: SignalSetter<bool>,
     ) -> AnyView;
@@ -155,7 +159,7 @@ pub trait FormStyle: 'static {
     /// See [`StepperData`].
     fn stepper(
         &self,
-        control: Rc<ControlRenderData<Self, StepperData>>,
+        control: Arc<ControlRenderData<Self, StepperData>>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
@@ -166,7 +170,7 @@ pub trait FormStyle: 'static {
     /// See [`SliderData`].
     fn slider(
         &self,
-        control: Rc<ControlRenderData<Self, SliderData>>,
+        control: Arc<ControlRenderData<Self, SliderData>>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,

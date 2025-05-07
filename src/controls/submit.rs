@@ -1,11 +1,10 @@
-use leptos::prelude::{AnyView, RwSignal, Signal};
-
 use super::{
     BuilderCxFn, BuilderFn, ControlRenderData, GetterVanityControlData, VanityControlBuilder,
     VanityControlData,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use std::rc::Rc;
+use leptos::prelude::{AnyView, RwSignal, Signal};
+use std::sync::Arc;
 
 /// Data used for the submit button control.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -15,7 +14,7 @@ impl<FD: FormToolData> VanityControlData<FD> for SubmitData {
     fn render_control<FS: FormStyle>(
         fs: &FS,
         _fd: RwSignal<FD>,
-        control: Rc<ControlRenderData<FS, Self>>,
+        control: Arc<ControlRenderData<FS, Self>>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView {
         fs.submit(control, value_getter)
@@ -45,7 +44,7 @@ impl<FD: FormToolData> VanityControlBuilder<FD, SubmitData> {
     /// For dynamic button text, use the `getter` method.
     pub fn text(mut self, text: impl ToString) -> Self {
         let text = text.to_string();
-        self.getter = Some(Rc::new(move |_| text.clone()));
+        self.getter = Some(Arc::new(move |_| text.clone()));
         self
     }
 }

@@ -1,16 +1,15 @@
-use leptos::{
-    prelude::{AnyView, MaybeSignal, RwSignal, Signal},
-    reactive::wrappers::write::SignalSetter,
-};
-
 use super::{
     BuilderCxFn, BuilderFn, ControlBuilder, ControlData, ControlRenderData, ValidatedControlData,
     ValidationState,
 };
 use crate::{form::FormToolData, form_builder::FormBuilder, styles::FormStyle};
-use std::rc::Rc;
+use leptos::{
+    prelude::{AnyView, Get, RwSignal, Signal},
+    reactive::wrappers::write::SignalSetter,
+};
+use std::sync::Arc;
 
-type DynamicOptionsGetter<FD> = Rc<dyn Fn(RwSignal<FD>) -> Vec<(String, String)> + 'static>;
+type DynamicOptionsGetter<FD> = Arc<dyn Fn(RwSignal<FD>) -> Vec<(String, String)> + 'static>;
 /// Data used for building the select control.
 pub struct SelectBuildData<FD: FormToolData> {
     pub name: String,
@@ -23,7 +22,7 @@ pub struct SelectBuildData<FD: FormToolData> {
     /// The options for the select.
     ///
     /// The first value is the string to display, the second is the value.
-    pub options: MaybeSignal<Vec<(String, String)>>,
+    pub options: Signal<Vec<(String, String)>>,
     /// The display text for the blank option, if there is one.
     pub blank_option: Option<String>,
 }
@@ -33,7 +32,7 @@ impl<FD: FormToolData> Default for SelectBuildData<FD> {
             name: String::default(),
             label: None,
             dynamic_options: None,
-            options: MaybeSignal::default(),
+            options: Signal::default(),
             blank_option: None,
         }
     }
@@ -58,7 +57,7 @@ pub struct SelectData {
     /// The options for the select.
     ///
     /// The first value is the string to display, the second is the value.
-    pub options: MaybeSignal<Vec<(String, String)>>,
+    pub options: Signal<Vec<(String, String)>>,
     /// The display text for the blank option, if there is one.
     pub blank_option: Option<String>,
 }
@@ -69,7 +68,7 @@ impl<FD: FormToolData> ControlData<FD> for SelectBuildData<FD> {
     fn render_control<FS: FormStyle>(
         fs: &FS,
         fd: RwSignal<FD>,
-        control: Rc<ControlRenderData<FS, Self>>,
+        control: Arc<ControlRenderData<FS, Self>>,
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,
@@ -80,7 +79,7 @@ impl<FD: FormToolData> ControlData<FD> for SelectBuildData<FD> {
             .as_ref()
             .map(|d| {
                 let d = d.clone();
-                MaybeSignal::Dynamic(move || d(fd))
+                Signal::derive(move || d(fd))
             })
             .unwrap_or(control.data.options.clone());
 
@@ -93,7 +92,7 @@ impl<FD: FormToolData> ControlData<FD> for SelectBuildData<FD> {
                 blank_option: control.data.blank_option.clone(),
             },
         };
-        let new_control = Rc::new(new_control);
+        let new_control = Arc::new(new_control);
 
         fs.select(new_control, value_getter, value_setter, validation_state)
     }
@@ -144,7 +143,7 @@ impl<FD: FormToolData, FDT> ControlBuilder<FD, SelectBuildData<FD>, FDT> {
         self.data.dynamic_options = None;
 
         let options = options.map(|v| (v.to_string(), v.to_string())).collect();
-        self.data.options = MaybeSignal::Static(options);
+        self.data.options = Signal::stored(options);
         self
     }
 
@@ -162,7 +161,7 @@ impl<FD: FormToolData, FDT> ControlBuilder<FD, SelectBuildData<FD>, FDT> {
         let options = options
             .map(|(d, v)| (d.to_string(), v.to_string()))
             .collect();
-        self.data.options = MaybeSignal::Static(options);
+        self.data.options = Signal::stored(options);
         self
     }
 
@@ -180,7 +179,8 @@ impl<FD: FormToolData, FDT> ControlBuilder<FD, SelectBuildData<FD>, FDT> {
                 .map(|v| (v.clone(), v))
                 .collect::<Vec<_>>()
         };
-        self.data.options = MaybeSignal::Dynamic(options.into_signal());
+
+        self.data.options = Signal::derive(options);
         self
     }
 
@@ -192,7 +192,7 @@ impl<FD: FormToolData, FDT> ControlBuilder<FD, SelectBuildData<FD>, FDT> {
         // clear dynamic option
         self.data.dynamic_options = None;
 
-        self.data.options = MaybeSignal::Dynamic(options);
+        self.data.options = options;
         self
     }
 
@@ -209,7 +209,7 @@ impl<FD: FormToolData, FDT> ControlBuilder<FD, SelectBuildData<FD>, FDT> {
                 .map(|v| (v.clone(), v))
                 .collect::<Vec<_>>()
         };
-        self.data.dynamic_options = Some(Rc::new(derived_signal));
+        self.data.dynamic_options = Some(Arc::new(derived_signal));
         self
     }
 
@@ -221,7 +221,7 @@ impl<FD: FormToolData, FDT> ControlBuilder<FD, SelectBuildData<FD>, FDT> {
         mut self,
         derived_signal: impl Fn(RwSignal<FD>) -> Vec<(String, String)> + 'static,
     ) -> Self {
-        self.data.dynamic_options = Some(Rc::new(derived_signal));
+        self.data.dynamic_options = Some(Arc::new(derived_signal));
         self
     }
 

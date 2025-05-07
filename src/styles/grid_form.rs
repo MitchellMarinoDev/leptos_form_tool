@@ -5,7 +5,8 @@ use crate::controls::{
     spacer::SpacerData, stepper::StepperData, submit::SubmitData, text_area::TextAreaData,
     text_input::TextInputData, ControlRenderData, UpdateEvent, ValidationState,
 };
-use std::rc::Rc;
+use leptos::prelude::*;
+use std::sync::Arc;
 use web_sys::MouseEvent;
 
 /// Styling attributes for the [`GridFormStyle`].
@@ -34,14 +35,14 @@ impl GridFormStyle {
         &self,
         styles: &[<GridFormStyle as FormStyle>::StylingAttributes],
         parent_class: &'static str,
-        inner: View,
-    ) -> View {
+        inner: AnyView,
+    ) -> AnyView {
         let mut width = 12;
         let mut tooltip = None;
         for style in styles.iter() {
             match style {
                 GFStyleAttr::Width(w) => width = *w,
-                GFStyleAttr::Tooltip(t) => tooltip = Some(t),
+                GFStyleAttr::Tooltip(t) => tooltip = Some(t.clone()),
             }
         }
 
@@ -50,49 +51,49 @@ impl GridFormStyle {
                 {inner}
             </div>
         }
-        .into_view()
+        .into_any()
     }
 }
 impl FormStyle for GridFormStyle {
     type StylingAttributes = GFStyleAttr;
 
-    fn form_frame(&self, form: ControlRenderData<Self, View>) -> View {
-        view! { <div class="form_grid">{form.data}</div> }.into_view()
+    fn form_frame(&self, form: ControlRenderData<Self, AnyView>) -> AnyView {
+        view! { <div class="form_grid">{form.data}</div> }.into_any()
     }
 
     /// A common function that wraps the given view in the styles
-    fn custom_component(&self, styles: &[Self::StylingAttributes], inner: View) -> View {
+    fn custom_component(&self, styles: &[Self::StylingAttributes], inner: AnyView) -> AnyView {
         self.common_component(styles, "custom_component_parent", inner)
     }
 
-    fn group(&self, group: Rc<ControlRenderData<Self, View>>) -> View {
-        let view = view! { <div class="form_group form_grid">{&group.data}</div> }.into_view();
+    fn group(&self, group: Arc<ControlRenderData<Self, AnyView>>) -> AnyView {
+        let view = view! { <div class="form_group form_grid">{&group.data}</div> }.into_any();
 
         self.common_component(&group.styles, "group_parent", view)
     }
 
-    fn spacer(&self, control: Rc<ControlRenderData<Self, SpacerData>>) -> View {
+    fn spacer(&self, control: Arc<ControlRenderData<Self, SpacerData>>) -> AnyView {
         self.common_component(
             &control.styles,
             "spacer_parent",
-            view! { <div style:height=control.data.height.as_ref()></div> }.into_view(),
+            view! { <div style:height=control.data.height.as_ref()></div> }.into_any(),
         )
     }
 
     fn heading(
         &self,
-        control: Rc<ControlRenderData<Self, HeadingData>>,
+        control: Arc<ControlRenderData<Self, HeadingData>>,
         value_getter: Option<Signal<String>>,
-    ) -> View {
+    ) -> AnyView {
         use crate::controls::heading::HeadingLevel::*;
 
         let title = move || value_getter.map(|v| v.get()).unwrap_or_default();
 
         let view = match control.data.level {
-            H1 => view! { <h1 class="form_heading"> {title} </h1> }.into_view(),
-            H2 => view! { <h2 class="form_heading"> {title} </h2> }.into_view(),
-            H3 => view! { <h3 class="form_heading"> {title} </h3> }.into_view(),
-            H4 => view! { <h4 class="form_heading"> {title} </h4> }.into_view(),
+            H1 => view! { <h1 class="form_heading"> {title} </h1> }.into_any(),
+            H2 => view! { <h2 class="form_heading"> {title} </h2> }.into_any(),
+            H3 => view! { <h3 class="form_heading"> {title} </h3> }.into_any(),
+            H4 => view! { <h4 class="form_heading"> {title} </h4> }.into_any(),
         };
 
         self.common_component(&control.styles, "heading_parent", view)
@@ -100,23 +101,23 @@ impl FormStyle for GridFormStyle {
 
     fn submit(
         &self,
-        control: Rc<ControlRenderData<Self, SubmitData>>,
+        control: Arc<ControlRenderData<Self, SubmitData>>,
         value_getter: Option<Signal<String>>,
-    ) -> View {
+    ) -> AnyView {
         let title = move || value_getter.map(|v| v.get()).unwrap_or_default();
 
         self.common_component(
             &control.styles,
             "submit_parent",
-            view! { <input type="submit" value=title class="form_submit"/> }.into_view(),
+            view! { <input type="submit" value=title class="form_submit"/> }.into_any(),
         )
     }
 
     fn button(
         &self,
-        control: Rc<ControlRenderData<Self, ButtonData>>,
+        control: Arc<ControlRenderData<Self, ButtonData>>,
         value_getter: Option<Signal<String>>,
-    ) -> View {
+    ) -> AnyView {
         let action = control.data.action.clone();
         let on_click = move |ev: MouseEvent| {
             if let Some(ref action) = action {
@@ -131,25 +132,25 @@ impl FormStyle for GridFormStyle {
                 {title}
             </button>
         }
-        .into_view();
+        .into_any();
 
         self.common_component(&control.styles, "button_parent", view)
     }
 
     fn output(
         &self,
-        control: Rc<ControlRenderData<Self, OutputData>>,
+        control: Arc<ControlRenderData<Self, OutputData>>,
         value_getter: Option<Signal<String>>,
-    ) -> View {
-        let view = view! { <span>{move || value_getter.map(|g| g.get())}</span> }.into_view();
+    ) -> AnyView {
+        let view = view! { <span>{move || value_getter.map(|g| g.get())}</span> }.into_any();
         self.common_component(&control.styles, "output_parent", view)
     }
 
     fn hidden(
         &self,
-        control: Rc<ControlRenderData<Self, HiddenData>>,
+        control: Arc<ControlRenderData<Self, HiddenData>>,
         value_getter: Option<Signal<String>>,
-    ) -> View {
+    ) -> AnyView {
         let value_getter = move || value_getter.map(|g| g.get());
         view! {
             <input
@@ -158,16 +159,16 @@ impl FormStyle for GridFormStyle {
                 style="visibility: hidden; position: absolute;"
             />
         }
-        .into_view()
+        .into_any()
     }
 
     fn text_input(
         &self,
-        control: Rc<ControlRenderData<Self, TextInputData>>,
+        control: Arc<ControlRenderData<Self, TextInputData>>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
-    ) -> View {
+    ) -> AnyView {
         let input = view! {
             <input
                 type=control.data.input_type
@@ -201,18 +202,18 @@ impl FormStyle for GridFormStyle {
             </div>
             {input}
         }
-        .into_view();
+        .into_any();
 
         self.common_component(&control.styles, "text_input_parent", view)
     }
 
     fn text_area(
         &self,
-        control: Rc<ControlRenderData<Self, TextAreaData>>,
+        control: Arc<ControlRenderData<Self, TextAreaData>>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
-    ) -> View {
+    ) -> AnyView {
         let input = view! {
             <textarea
                 id=&control.data.name
@@ -246,18 +247,18 @@ impl FormStyle for GridFormStyle {
             </div>
             {input}
         }
-        .into_view();
+        .into_any();
 
         self.common_component(&control.styles, "text_area_parent", view)
     }
 
     fn radio_buttons(
         &self,
-        control: Rc<ControlRenderData<Self, RadioButtonsData>>,
+        control: Arc<ControlRenderData<Self, RadioButtonsData>>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
-    ) -> View {
+    ) -> AnyView {
         let buttons_view = control
             .data
             .options
@@ -302,18 +303,18 @@ impl FormStyle for GridFormStyle {
                 {buttons_view}
             </div>
         }
-        .into_view();
+        .into_any();
 
         self.common_component(&control.styles, "radio_buttons_parent", view)
     }
 
     fn select(
         &self,
-        control: Rc<ControlRenderData<Self, SelectData>>,
+        control: Arc<ControlRenderData<Self, SelectData>>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
-    ) -> View {
+    ) -> AnyView {
         let control_clone = control.clone();
         let options_view = move || {
             control_clone
@@ -361,17 +362,17 @@ impl FormStyle for GridFormStyle {
                 {options_view}
             </select>
         }
-        .into_view();
+        .into_any();
 
         self.common_component(&control.styles, "select_parent", view)
     }
 
     fn checkbox(
         &self,
-        control: Rc<ControlRenderData<Self, CheckboxData>>,
+        control: Arc<ControlRenderData<Self, CheckboxData>>,
         value_getter: Signal<bool>,
         value_setter: SignalSetter<bool>,
-    ) -> View {
+    ) -> AnyView {
         let label = control
             .data
             .label
@@ -399,18 +400,18 @@ impl FormStyle for GridFormStyle {
                 <span style="margin: auto 0.5rem;">{label}</span>
             </label>
         }
-        .into_view();
+        .into_any();
 
         self.common_component(&control.styles, "checkbox_parent", view)
     }
 
     fn stepper(
         &self,
-        control: Rc<ControlRenderData<Self, StepperData>>,
+        control: Arc<ControlRenderData<Self, StepperData>>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
-    ) -> View {
+    ) -> AnyView {
         let view = view! {
             <div>
                 <label for=&control.data.name class="form_label">
@@ -433,18 +434,18 @@ impl FormStyle for GridFormStyle {
                 }
             />
         }
-        .into_view();
+        .into_any();
 
         self.common_component(&control.styles, "stepper_parent", view)
     }
 
     fn slider(
         &self,
-        control: Rc<ControlRenderData<Self, SliderData>>,
+        control: Arc<ControlRenderData<Self, SliderData>>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
-    ) -> View {
+    ) -> AnyView {
         let view = view! {
             <div>
                 <label for=&control.data.name class="form_label">
@@ -467,7 +468,7 @@ impl FormStyle for GridFormStyle {
                 }
             />
         }
-        .into_view();
+        .into_any();
 
         self.common_component(&control.styles, "slider_parent", view)
     }
