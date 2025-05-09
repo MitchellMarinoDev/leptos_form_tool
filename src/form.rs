@@ -1,7 +1,8 @@
 use crate::{controls::ValidationFn, form_builder::FormBuilder, styles::FormStyle};
 use ev::SubmitEvent;
 use leptos::{
-    prelude::{Action, AnyView, GetUntracked, IntoAny, RwSignal, ServerFnError},
+    prelude::{AnyView, GetUntracked, IntoAny, RwSignal},
+    server::ServerAction,
     server_fn::{client::Client, codec::PostUrl, request::ClientReq, ServerFn},
     *,
 };
@@ -34,7 +35,6 @@ impl<FD: FormToolData> FormValidator<FD> {
 ///
 /// With this, you can render the form, get the form data, or get
 /// a validator for the data.
-#[derive(Clone)]
 pub struct Form<FD: FormToolData> {
     /// The form data signal.
     pub fd: RwSignal<FD>,
@@ -57,11 +57,6 @@ impl<FD: FormToolData> Form<FD> {
         validator.validate(&self.fd.get_untracked())
     }
 
-    /// Gets the view associated with this [`Form`].
-    pub fn view(&self) -> AnyView {
-        self.view.clone()
-    }
-
     /// Splits this [`Form`] into it's parts.
     pub fn to_parts(self) -> (RwSignal<FD>, FormValidator<FD>, AnyView) {
         (
@@ -76,7 +71,7 @@ impl<FD: FormToolData> Form<FD> {
 
 impl<FD: FormToolData> IntoAny for Form<FD> {
     fn into_any(self) -> AnyView {
-        self.view()
+        self.view
     }
 }
 
@@ -125,16 +120,18 @@ pub trait FormToolData: Clone + Send + Sync + 'static {
     /// - [`get_form_controls`](Self::get_form_controls)
     fn get_form<ServFn, F: Fn(SubmitEvent, RwSignal<Self>) + 'static>(
         self,
-        action: Action<ServFn, Result<ServFn::Output, ServerFnError<ServFn::Error>>>,
+        action: ServerAction<ServFn>,
         on_submit: F,
         style: Self::Style,
         context: Self::Context,
     ) -> Form<Self>
     where
-        ServFn: DeserializeOwned + ServerFn<InputEncoding = PostUrl> + Send + Sync + 'static,
+        ServFn:
+            DeserializeOwned + ServerFn<InputEncoding = PostUrl> + From<Self> + Clone + Send + Sync,
+        ServFn::Output: Send + Sync,
+        ServFn::Error: Send + Sync,
         <<ServFn::Client as Client<ServFn::Error>>::Request as ClientReq<ServFn::Error>>::FormData:
             From<FormData>,
-        ServFn: From<Self>,
     {
         let builder = FormBuilder::new(context);
         let builder = Self::build_form(builder);
@@ -153,13 +150,16 @@ pub trait FormToolData: Clone + Send + Sync + 'static {
     /// - [`get_form_controls`](Self::get_form_controls)
     fn get_action_form<ServFn, F: Fn(SubmitEvent, RwSignal<Self>) + 'static>(
         self,
-        action: Action<ServFn, Result<ServFn::Output, ServerFnError<ServFn::Error>>>,
+        action: ServerAction<ServFn>,
         on_submit: F,
         style: Self::Style,
         context: Self::Context,
     ) -> Form<Self>
     where
-        ServFn: DeserializeOwned + ServerFn<InputEncoding = PostUrl> + Send + Sync + 'static,
+        ServFn:
+            DeserializeOwned + ServerFn<InputEncoding = PostUrl> + From<Self> + Clone + Send + Sync,
+        ServFn::Output: Send + Sync,
+        ServFn::Error: Send + Sync,
         <<ServFn::Client as Client<ServFn::Error>>::Request as ClientReq<ServFn::Error>>::FormData:
             From<FormData>,
     {
