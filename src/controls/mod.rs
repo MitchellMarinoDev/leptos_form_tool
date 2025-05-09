@@ -127,19 +127,19 @@ pub enum UpdateEvent {
 }
 
 /// A trait for the data needed to render an read-only control.
-pub trait VanityControlData<FD: FormToolData>: Send + Sync + 'static {
+pub trait VanityControlData<FD: FormToolData>: Clone + Send + Sync + 'static {
     /// Builds the control, returning the [`AnyView`] that was built.
     fn render_control<FS: FormStyle>(
         fs: &FS,
         fd: RwSignal<FD>,
-        control: Arc<ControlRenderData<FS, Self>>,
+        control: ControlRenderData<FS, Self>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView;
 }
 pub trait GetterVanityControlData<FD: FormToolData>: VanityControlData<FD> {}
 
 /// A trait for the data needed to render an interactive control.
-pub trait ControlData<FD: FormToolData>: Send + Sync + 'static {
+pub trait ControlData<FD: FormToolData>: Clone + Send + Sync + 'static {
     /// This is the data type returned by this control. Usually a [`String`].
     type ReturnType: Clone + Send + Sync;
 
@@ -147,7 +147,7 @@ pub trait ControlData<FD: FormToolData>: Send + Sync + 'static {
     fn render_control<FS: FormStyle>(
         fs: &FS,
         fd: RwSignal<FD>,
-        control: Arc<ControlRenderData<FS, Self>>,
+        control: ControlRenderData<FS, Self>,
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,
@@ -159,6 +159,18 @@ pub trait ValidatedControlData<FD: FormToolData>: ControlData<FD> {}
 pub struct ControlRenderData<FS: FormStyle + ?Sized, C: ?Sized> {
     pub styles: Vec<FS::StylingAttributes>,
     pub data: C,
+}
+impl<FS, C> Clone for ControlRenderData<FS, C>
+where
+    FS: FormStyle + ?Sized,
+    C: ?Sized + Clone,
+{
+    fn clone(&self) -> Self {
+        ControlRenderData {
+            styles: self.styles.clone(),
+            data: self.data.clone(),
+        }
+    }
 }
 
 /// The data needed to render a read-only control of type `C`.

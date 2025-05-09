@@ -116,7 +116,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
 
         let cx = self.cx.clone();
         let render_fn = move |fs: Arc<FD::Style>, fd: RwSignal<FD>| {
-            let render_data = Arc::new(render_data);
+            let render_data = render_data;
             let value_getter =
                 getter.map(|getter| Signal::derive(move || fd.with(|fd| getter(fd))));
             let view = move || {
@@ -198,7 +198,6 @@ impl<FD: FormToolData> FormBuilder<FD> {
             show_when,
         } = control_data;
 
-        let render_data = Arc::new(render_data);
         let (validation_signal, validation_signal_set) = signal(ValidationState::Passed);
         let validation_fn_clone = validation_fn.clone();
         let initial_value = unparse_fn(fd.with_untracked(|fd| getter(fd)));

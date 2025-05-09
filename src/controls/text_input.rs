@@ -7,7 +7,6 @@ use leptos::{
     prelude::{AnyView, RwSignal, Signal},
     reactive::wrappers::write::SignalSetter,
 };
-use std::sync::Arc;
 
 /// Data used for the text input control.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
@@ -37,7 +36,7 @@ impl<FD: FormToolData> ControlData<FD> for TextInputData {
     fn render_control<FS: FormStyle>(
         fs: &FS,
         _fd: RwSignal<FD>,
-        control: Arc<ControlRenderData<FS, Self>>,
+        control: ControlRenderData<FS, Self>,
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,

@@ -33,7 +33,7 @@ impl<FD: FormToolData> VanityControlData<FD> for ButtonBuildData<FD> {
     fn render_control<FS: FormStyle>(
         fs: &FS,
         fd: RwSignal<FD>,
-        control: Arc<ControlRenderData<FS, Self>>,
+        control: ControlRenderData<FS, Self>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView {
         let action = control.data.action.as_ref().map(|a| {
@@ -46,7 +46,7 @@ impl<FD: FormToolData> VanityControlData<FD> for ButtonBuildData<FD> {
             styles: control.styles.clone(),
             data: ButtonData { action },
         };
-        let new_control = Arc::new(new_control);
+
         fs.button(new_control, value_getter)
     }
 }

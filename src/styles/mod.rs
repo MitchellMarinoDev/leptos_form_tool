@@ -1,7 +1,5 @@
 mod grid_form;
 
-use std::sync::Arc;
-
 use crate::controls::{
     button::ButtonData, checkbox::CheckboxData, heading::HeadingData, hidden::HiddenData,
     output::OutputData, radio_buttons::RadioButtonsData, select::SelectData, slider::SliderData,
@@ -55,12 +53,12 @@ pub trait FormStyle: Send + Sync + 'static {
     /// Renders a spacer.
     ///
     /// See [`SpacerData`].
-    fn spacer(&self, control: Arc<ControlRenderData<Self, SpacerData>>) -> AnyView;
+    fn spacer(&self, control: ControlRenderData<Self, SpacerData>) -> AnyView;
 
     /// Renders a heading for a section of the form.
     fn heading(
         &self,
-        control: Arc<ControlRenderData<Self, HeadingData>>,
+        control: ControlRenderData<Self, HeadingData>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView;
 
@@ -69,7 +67,7 @@ pub trait FormStyle: Send + Sync + 'static {
     /// See [`SubmitData`].
     fn submit(
         &self,
-        control: Arc<ControlRenderData<Self, SubmitData>>,
+        control: ControlRenderData<Self, SubmitData>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView;
 
@@ -78,7 +76,7 @@ pub trait FormStyle: Send + Sync + 'static {
     /// See [`ButtonData`]
     fn button(
         &self,
-        control: Arc<ControlRenderData<Self, ButtonData>>,
+        control: ControlRenderData<Self, ButtonData>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView;
 
@@ -87,7 +85,7 @@ pub trait FormStyle: Send + Sync + 'static {
     /// See [`OutputData`].
     fn output(
         &self,
-        control: Arc<ControlRenderData<Self, OutputData>>,
+        control: ControlRenderData<Self, OutputData>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView;
 
@@ -96,7 +94,7 @@ pub trait FormStyle: Send + Sync + 'static {
     /// See [`HiddenData`].
     fn hidden(
         &self,
-        control: Arc<ControlRenderData<Self, HiddenData>>,
+        control: ControlRenderData<Self, HiddenData>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView;
 
@@ -105,7 +103,7 @@ pub trait FormStyle: Send + Sync + 'static {
     /// See [`TextInputData`].
     fn text_input(
         &self,
-        control: Arc<ControlRenderData<Self, TextInputData>>,
+        control: ControlRenderData<Self, TextInputData>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
@@ -116,7 +114,7 @@ pub trait FormStyle: Send + Sync + 'static {
     /// See [`TextAreaData`].
     fn text_area(
         &self,
-        control: Arc<ControlRenderData<Self, TextAreaData>>,
+        control: ControlRenderData<Self, TextAreaData>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
@@ -127,7 +125,7 @@ pub trait FormStyle: Send + Sync + 'static {
     /// See [`RadioButtonsData`].
     fn radio_buttons(
         &self,
-        control: Arc<ControlRenderData<Self, RadioButtonsData>>,
+        control: ControlRenderData<Self, RadioButtonsData>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
@@ -138,7 +136,7 @@ pub trait FormStyle: Send + Sync + 'static {
     /// See [`SelectData`].
     fn select(
         &self,
-        control: Arc<ControlRenderData<Self, SelectData>>,
+        control: ControlRenderData<Self, SelectData>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
@@ -149,7 +147,7 @@ pub trait FormStyle: Send + Sync + 'static {
     /// See [`CheckboxData`].
     fn checkbox(
         &self,
-        control: Arc<ControlRenderData<Self, CheckboxData>>,
+        control: ControlRenderData<Self, CheckboxData>,
         value_getter: Signal<bool>,
         value_setter: SignalSetter<bool>,
     ) -> AnyView;
@@ -159,7 +157,7 @@ pub trait FormStyle: Send + Sync + 'static {
     /// See [`StepperData`].
     fn stepper(
         &self,
-        control: Arc<ControlRenderData<Self, StepperData>>,
+        control: ControlRenderData<Self, StepperData>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
@@ -170,7 +168,7 @@ pub trait FormStyle: Send + Sync + 'static {
     /// See [`SliderData`].
     fn slider(
         &self,
-        control: Arc<ControlRenderData<Self, SliderData>>,
+        control: ControlRenderData<Self, SliderData>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,

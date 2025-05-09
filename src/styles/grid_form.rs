@@ -6,7 +6,6 @@ use crate::controls::{
     text_input::TextInputData, ControlRenderData, UpdateEvent, ValidationState,
 };
 use leptos::{prelude::*, reactive::wrappers::write::SignalSetter};
-use std::sync::Arc;
 use web_sys::MouseEvent;
 
 /// Styling attributes for the [`GridFormStyle`].
@@ -72,7 +71,7 @@ impl FormStyle for GridFormStyle {
         self.common_component(&group.styles, "group_parent", view)
     }
 
-    fn spacer(&self, control: Arc<ControlRenderData<Self, SpacerData>>) -> AnyView {
+    fn spacer(&self, control: ControlRenderData<Self, SpacerData>) -> AnyView {
         self.common_component(
             &control.styles,
             "spacer_parent",
@@ -83,7 +82,7 @@ impl FormStyle for GridFormStyle {
 
     fn heading(
         &self,
-        control: Arc<ControlRenderData<Self, HeadingData>>,
+        control: ControlRenderData<Self, HeadingData>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView {
         use crate::controls::heading::HeadingLevel::*;
@@ -102,7 +101,7 @@ impl FormStyle for GridFormStyle {
 
     fn submit(
         &self,
-        control: Arc<ControlRenderData<Self, SubmitData>>,
+        control: ControlRenderData<Self, SubmitData>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView {
         let title = move || value_getter.map(|v| v.get()).unwrap_or_default();
@@ -116,7 +115,7 @@ impl FormStyle for GridFormStyle {
 
     fn button(
         &self,
-        control: Arc<ControlRenderData<Self, ButtonData>>,
+        control: ControlRenderData<Self, ButtonData>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView {
         let action = control.data.action.clone();
@@ -140,7 +139,7 @@ impl FormStyle for GridFormStyle {
 
     fn output(
         &self,
-        control: Arc<ControlRenderData<Self, OutputData>>,
+        control: ControlRenderData<Self, OutputData>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView {
         let view = view! { <span>{move || value_getter.map(|g| g.get())}</span> }.into_any();
@@ -149,13 +148,13 @@ impl FormStyle for GridFormStyle {
 
     fn hidden(
         &self,
-        control: Arc<ControlRenderData<Self, HiddenData>>,
+        control: ControlRenderData<Self, HiddenData>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView {
         let value_getter = move || value_getter.map(|g| g.get());
         view! {
             <input
-                name=&control.data.name
+                name=control.data.name
                 prop:value=value_getter
                 style="visibility: hidden; position: absolute;"
             />
@@ -165,7 +164,7 @@ impl FormStyle for GridFormStyle {
 
     fn text_input(
         &self,
-        control: Arc<ControlRenderData<Self, TextInputData>>,
+        control: ControlRenderData<Self, TextInputData>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
@@ -214,7 +213,7 @@ impl FormStyle for GridFormStyle {
 
     fn text_area(
         &self,
-        control: Arc<ControlRenderData<Self, TextAreaData>>,
+        control: ControlRenderData<Self, TextAreaData>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
@@ -263,7 +262,7 @@ impl FormStyle for GridFormStyle {
 
     fn radio_buttons(
         &self,
-        control: Arc<ControlRenderData<Self, RadioButtonsData>>,
+        control: ControlRenderData<Self, RadioButtonsData>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
@@ -280,9 +279,9 @@ impl FormStyle for GridFormStyle {
                 view! {
                     <input
                         type="radio"
-                        id=&value
-                        name=&control.data.name
-                        value=&value
+                        id=value.clone()
+                        name=control.data.name.clone()
+                        value=value.clone()
                         prop:checked=move || { value_getter.get() == value_clone }
                         on:input=move |ev| {
                             let new_value = event_target_checked(&ev);
@@ -292,7 +291,7 @@ impl FormStyle for GridFormStyle {
                         }
                     />
 
-                    <label for=&value>{display}</label>
+                    <label for=value>{display}</label>
                     <br/>
                 }
             })
@@ -300,8 +299,8 @@ impl FormStyle for GridFormStyle {
 
         let view = view! {
             <div>
-                <label for=&control.data.name class="form_label">
-                    {control.data.label.as_ref()}
+                <label for=control.data.name class="form_label">
+                    {control.data.label}
                 </label>
                 <span class="form_error">{move || validation_state.get().take_msg()}</span>
             </div>
@@ -319,7 +318,7 @@ impl FormStyle for GridFormStyle {
 
     fn select(
         &self,
-        control: Arc<ControlRenderData<Self, SelectData>>,
+        control: ControlRenderData<Self, SelectData>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
@@ -343,7 +342,7 @@ impl FormStyle for GridFormStyle {
             .collect_view()
         };
 
-        let blank_option_view = control.data.blank_option.as_ref().map(|display| {
+        let blank_option_view = control.data.blank_option.map(|display| {
             view! {
                 <option value="" selected=move || { value_getter.get().as_str() == "" }>
                     {display}
@@ -353,14 +352,14 @@ impl FormStyle for GridFormStyle {
 
         let view = view! {
             <div>
-                <label for=&control.data.name class="form_label">
-                    {control.data.label.as_ref()}
+                <label for=control.data.name.clone() class="form_label">
+                    {control.data.label}
                 </label>
                 <span class="form_error">{move || validation_state.get().take_msg()}</span>
             </div>
             <select
-                id=&control.data.name
-                name=&control.data.name
+                id=control.data.name.clone()
+                name=control.data.name
                 class="form_input"
                 class=("form_input_invalid", move || validation_state.get().is_err())
                 on:input=move |ev| {
@@ -378,7 +377,7 @@ impl FormStyle for GridFormStyle {
 
     fn checkbox(
         &self,
-        control: Arc<ControlRenderData<Self, CheckboxData>>,
+        control: ControlRenderData<Self, CheckboxData>,
         value_getter: Signal<bool>,
         value_setter: SignalSetter<bool>,
     ) -> AnyView {
@@ -390,15 +389,15 @@ impl FormStyle for GridFormStyle {
 
         let view = view! {
             <label
-                for=&control.data.name
+                for=control.data.name
                 class="form_checkbox"
                 class=("form_checkbox_checked", move || value_getter.get())
                 class=("form_checkbox_unchecked", move || !value_getter.get())
             >
                 <input
                     type="checkbox"
-                    id=&control.data.name
-                    name=&control.data.name
+                    id=control.data.name.clone()
+                    name=control.data.name.clone()
                     style="margin: auto 0;"
                     prop:checked=value_getter
                     on:input=move |ev| {
@@ -416,22 +415,22 @@ impl FormStyle for GridFormStyle {
 
     fn stepper(
         &self,
-        control: Arc<ControlRenderData<Self, StepperData>>,
+        control: ControlRenderData<Self, StepperData>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
     ) -> AnyView {
         let view = view! {
             <div>
-                <label for=&control.data.name class="form_label">
-                    {control.data.label.as_ref()}
+                <label for=control.data.name.clone() class="form_label">
+                    {control.data.label}
                 </label>
                 <span class="form_error">{move || validation_state.get().take_msg()}</span>
             </div>
             <input
                 type="number"
-                id=&control.data.name
-                name=&control.data.name
+                id=control.data.name.clone()
+                name=control.data.name.clone()
                 step=control.data.step.clone()
                 min=control.data.min.clone()
                 max=control.data.max.clone()
@@ -450,22 +449,22 @@ impl FormStyle for GridFormStyle {
 
     fn slider(
         &self,
-        control: Arc<ControlRenderData<Self, SliderData>>,
+        control: ControlRenderData<Self, SliderData>,
         value_getter: Signal<String>,
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
     ) -> AnyView {
         let view = view! {
             <div>
-                <label for=&control.data.name class="form_label">
-                    {control.data.label.as_ref()}
+                <label for=control.data.name.clone() class="form_label">
+                    {control.data.label}
                 </label>
                 <span class="form_error">{move || validation_state.get().take_msg()}</span>
             </div>
             <input
                 type="range"
-                id=&control.data.name
-                name=&control.data.name
+                id=control.data.name.clone()
+                name=control.data.name.clone()
                 min=control.data.min.clone()
                 max=control.data.max.clone()
                 class="form_input"

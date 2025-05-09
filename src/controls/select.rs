@@ -69,7 +69,7 @@ impl<FD: FormToolData> ControlData<FD> for SelectBuildData<FD> {
     fn render_control<FS: FormStyle>(
         fs: &FS,
         fd: RwSignal<FD>,
-        control: Arc<ControlRenderData<FS, Self>>,
+        control: ControlRenderData<FS, Self>,
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,
@@ -93,7 +93,6 @@ impl<FD: FormToolData> ControlData<FD> for SelectBuildData<FD> {
                 blank_option: control.data.blank_option.clone(),
             },
         };
-        let new_control = Arc::new(new_control);
 
         fs.select(new_control, value_getter, value_setter, validation_state)
     }
