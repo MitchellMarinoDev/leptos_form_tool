@@ -23,7 +23,7 @@ pub trait FormStyle: Send + Sync + 'static {
     /// The type of styling attributes that this [`FormStyle`] takes.
     ///
     /// These styling attributes can be applied to any of the controls.
-    type StylingAttributes: Clone;
+    type StylingAttributes: Send + Sync + Clone;
 
     /// Render any containing components for the form.
     ///
@@ -50,7 +50,7 @@ pub trait FormStyle: Send + Sync + 'static {
     /// The inner view for the group's components is provided.
     /// This method should wrap the group in any visual grouping elements,
     /// and apply the styles.
-    fn group(&self, group: Arc<ControlRenderData<Self, AnyView>>) -> AnyView;
+    fn group(&self, group: ControlRenderData<Self, AnyView>) -> AnyView;
 
     /// Renders a spacer.
     ///

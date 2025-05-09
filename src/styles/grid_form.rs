@@ -66,8 +66,8 @@ impl FormStyle for GridFormStyle {
         self.common_component(styles, "custom_component_parent", inner)
     }
 
-    fn group(&self, group: Arc<ControlRenderData<Self, AnyView>>) -> AnyView {
-        let view = view! { <div class="form_group form_grid">{&group.data}</div> }.into_any();
+    fn group(&self, group: ControlRenderData<Self, AnyView>) -> AnyView {
+        let view = view! { <div class="form_group form_grid">{group.data}</div> }.into_any();
 
         self.common_component(&group.styles, "group_parent", view)
     }
@@ -170,34 +170,38 @@ impl FormStyle for GridFormStyle {
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
     ) -> AnyView {
+        let update_event = control.data.update_event;
         let input = view! {
             <input
                 type=control.data.input_type
-                id=&control.data.name
-                name=&control.data.name
-                placeholder=control.data.placeholder.as_ref()
+                id=control.data.name.clone()
+                name=control.data.name.clone()
+                placeholder=control.data.placeholder.clone()
                 class="form_input"
                 class=("form_input_invalid", move || validation_state.get().is_err())
-                prop:value=move || value_getter.get()
+                prop:value=move || { value_getter.get() }
+                on:input:target=move |ev| {
+                    if update_event == UpdateEvent::OnInput {
+                        value_setter.set(ev.target().value())
+                    }
+                }
+                on:focusout:target=move |ev| {
+                    if update_event == UpdateEvent::OnFocusout {
+                        value_setter.set(ev.target().value())
+                    }
+                }
+                on:change:target=move |ev| {
+                    if update_event == UpdateEvent::OnChange {
+                        value_setter.set(ev.target().value())
+                    }
+                }
             />
-        };
-
-        let input = match control.data.update_event {
-            UpdateEvent::OnFocusout => input.on(ev::focusout, move |ev| {
-                value_setter.set(event_target_value(&ev));
-            }),
-            UpdateEvent::OnInput => input.on(ev::input, move |ev| {
-                value_setter.set(event_target_value(&ev));
-            }),
-            UpdateEvent::OnChange => input.on(ev::change, move |ev| {
-                value_setter.set(event_target_value(&ev));
-            }),
         };
 
         let view = view! {
             <div>
-                <label for=&control.data.name class="form_label">
-                    {control.data.label.as_ref()}
+                <label for=control.data.name.clone() class="form_label">
+                    {control.data.label.clone()}
                 </label>
                 <span class="form_error">{move || validation_state.get().take_msg()}</span>
             </div>
@@ -215,34 +219,38 @@ impl FormStyle for GridFormStyle {
         value_setter: SignalSetter<String>,
         validation_state: Signal<ValidationState>,
     ) -> AnyView {
+        let update_event = control.data.update_event;
         let input = view! {
             <textarea
-                id=&control.data.name
-                name=&control.data.name
-                placeholder=control.data.placeholder.as_ref()
-                prop:value=move || value_getter.get()
+                id=control.data.name.clone()
+                name=control.data.name.clone()
+                placeholder=control.data.placeholder.clone()
                 style="resize: vertical;"
                 class="form_input"
                 class=("form_input_invalid", move || validation_state.get().is_err())
+                prop:value=move || value_getter.get()
+                on:input:target=move |ev| {
+                    if update_event == UpdateEvent::OnInput {
+                        value_setter.set(ev.target().value())
+                    }
+                }
+                on:focusout:target=move |ev| {
+                    if update_event == UpdateEvent::OnFocusout {
+                        value_setter.set(ev.target().value())
+                    }
+                }
+                on:change:target=move |ev| {
+                    if update_event == UpdateEvent::OnChange {
+                        value_setter.set(ev.target().value())
+                    }
+                }
             ></textarea>
-        };
-
-        let input = match control.data.update_event {
-            UpdateEvent::OnFocusout => input.on(ev::focusout, move |ev| {
-                value_setter.set(event_target_value(&ev));
-            }),
-            UpdateEvent::OnInput => input.on(ev::input, move |ev| {
-                value_setter.set(event_target_value(&ev));
-            }),
-            UpdateEvent::OnChange => input.on(ev::change, move |ev| {
-                value_setter.set(event_target_value(&ev));
-            }),
         };
 
         let view = view! {
             <div>
-                <label for=&control.data.name class="form_label">
-                    {control.data.label.as_ref()}
+                <label for=control.data.name.clone() class="form_label">
+                    {control.data.label.clone()}
                 </label>
                 <span class="form_error">{move || validation_state.get().take_msg()}</span>
             </div>

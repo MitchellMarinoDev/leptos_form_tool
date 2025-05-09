@@ -24,12 +24,12 @@ impl<FD: FormToolData> FormBuilder<FD> {
                 .map(|r_fn| r_fn(fs.clone(), fd))
                 .unzip();
 
-            let render_data = Arc::new(ControlRenderData {
+            let render_data = ControlRenderData {
                 data: views.into_any(),
                 styles: group_builder.styles,
-            });
+            };
 
-            let view = fs.group(render_data.clone());
+            let view = fs.group(render_data);
 
             let validation_cb = move || {
                 let mut success = true;
