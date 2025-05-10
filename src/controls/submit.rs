@@ -14,7 +14,7 @@ impl<FD: FormToolData> VanityControlData<FD> for SubmitData {
     fn render_control<FS: FormStyle>(
         fs: &FS,
         _fd: RwSignal<FD>,
-        control: Arc<ControlRenderData<FS, Self>>,
+        control: ControlRenderData<FS, Self>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView {
         fs.submit(control, value_getter)

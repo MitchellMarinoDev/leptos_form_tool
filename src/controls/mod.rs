@@ -1,9 +1,11 @@
+//! This module contains all the possible controls that you
+//! can use to build a form.
+
+use crate::{form::FormToolData, styles::FormStyle};
 use leptos::{
     prelude::{AnyView, RwSignal, Signal},
     reactive::wrappers::write::SignalSetter,
 };
-
-use crate::{form::FormToolData, styles::FormStyle};
 use std::{
     fmt::Display,
     marker::{Send, Sync},
@@ -29,14 +31,17 @@ pub mod text_input;
 
 pub trait BuilderFn<B>: Fn(B) -> B {}
 pub trait BuilderCxFn<B, CX>: Fn(B, Arc<CX>) -> B {}
-pub trait ValidationFn<FD: ?Sized>: Fn(&FD) -> Result<(), String> + Send + Sync + 'static {}
+pub trait ValidationFn<FDT: ?Sized>:
+    Fn(&FDT) -> Result<(), String> + Send + Sync + 'static
+{
+}
 pub trait ValidationCb: Fn() -> bool + 'static {}
 pub trait ParseFn<CR, FDT>: Fn(CR) -> Result<FDT, String> + Send + Sync + 'static {}
 pub trait UnparseFn<CR, FDT>: Fn(FDT) -> CR + 'static {}
 pub trait FieldGetter<FD, FDT>: Fn(&FD) -> FDT + Send + Sync + 'static {}
 pub trait FieldSetter<FD, FDT>: Fn(&mut FD, FDT) + Send + Sync + 'static {}
-pub trait ShowWhenFn<FD: 'static + Send + Sync, CX>:
-    Fn(Signal<FD>, Arc<CX>) -> bool + 'static
+pub trait ShowWhenFn<FD: Send + Sync + 'static, CX: Send + Sync>:
+    Fn(Signal<FD>, Arc<CX>) -> bool + Send + Sync
 {
 }
 pub trait RenderFn<FS, FD: 'static>:
@@ -56,8 +61,8 @@ impl<CR, FDT, F> ParseFn<CR, FDT> for F where
 impl<CR, FDT, F> UnparseFn<CR, FDT> for F where F: Fn(FDT) -> CR + 'static {}
 impl<FD, FDT, F> FieldGetter<FD, FDT> for F where F: Fn(&FD) -> FDT + Send + Sync + 'static {}
 impl<FD, FDT, F> FieldSetter<FD, FDT> for F where F: Fn(&mut FD, FDT) + Send + Sync + 'static {}
-impl<FD: Send + Sync + 'static, CX, F> ShowWhenFn<FD, CX> for F where
-    F: Fn(Signal<FD>, Arc<CX>) -> bool + 'static
+impl<FD: Send + Sync + 'static, CX: Send + Sync, F> ShowWhenFn<FD, CX> for F where
+    F: Fn(Signal<FD>, Arc<CX>) -> bool + Send + Sync
 {
 }
 impl<FS, FD: 'static, F> RenderFn<FS, FD> for F where
@@ -124,19 +129,19 @@ pub enum UpdateEvent {
 }
 
 /// A trait for the data needed to render an read-only control.
-pub trait VanityControlData<FD: FormToolData>: 'static {
+pub trait VanityControlData<FD: FormToolData>: Clone + Send + Sync + 'static {
     /// Builds the control, returning the [`AnyView`] that was built.
     fn render_control<FS: FormStyle>(
         fs: &FS,
         fd: RwSignal<FD>,
-        control: Arc<ControlRenderData<FS, Self>>,
+        control: ControlRenderData<FS, Self>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView;
 }
 pub trait GetterVanityControlData<FD: FormToolData>: VanityControlData<FD> {}
 
 /// A trait for the data needed to render an interactive control.
-pub trait ControlData<FD: FormToolData>: 'static {
+pub trait ControlData<FD: FormToolData>: Clone + Send + Sync + 'static {
     /// This is the data type returned by this control. Usually a [`String`].
     type ReturnType: Clone + Send + Sync;
 
@@ -144,7 +149,7 @@ pub trait ControlData<FD: FormToolData>: 'static {
     fn render_control<FS: FormStyle>(
         fs: &FS,
         fd: RwSignal<FD>,
-        control: Arc<ControlRenderData<FS, Self>>,
+        control: ControlRenderData<FS, Self>,
         value_getter: Signal<Self::ReturnType>,
         value_setter: SignalSetter<Self::ReturnType>,
         validation_state: Signal<ValidationState>,
@@ -157,19 +162,31 @@ pub struct ControlRenderData<FS: FormStyle + ?Sized, C: ?Sized> {
     pub styles: Vec<FS::StylingAttributes>,
     pub data: C,
 }
+impl<FS, C> Clone for ControlRenderData<FS, C>
+where
+    FS: FormStyle + ?Sized,
+    C: Clone,
+{
+    fn clone(&self) -> Self {
+        ControlRenderData {
+            styles: self.styles.clone(),
+            data: self.data.clone(),
+        }
+    }
+}
 
 /// The data needed to render a read-only control of type `C`.
 pub struct VanityControlBuilder<FD: FormToolData, C: VanityControlData<FD>> {
     pub(crate) style_attributes: Vec<<FD::Style as FormStyle>::StylingAttributes>,
     pub data: C,
     pub(crate) getter: Option<Arc<dyn FieldGetter<FD, String>>>,
-    pub(crate) show_when: Option<Box<dyn ShowWhenFn<FD, FD::Context>>>,
+    pub(crate) show_when: Option<Arc<dyn ShowWhenFn<FD, FD::Context>>>,
 }
 
 pub(crate) struct BuiltVanityControlData<FD: FormToolData, C: VanityControlData<FD>> {
     pub(crate) render_data: ControlRenderData<FD::Style, C>,
     pub(crate) getter: Option<Arc<dyn FieldGetter<FD, String>>>,
-    pub(crate) show_when: Option<Box<dyn ShowWhenFn<FD, FD::Context>>>,
+    pub(crate) show_when: Option<Arc<dyn ShowWhenFn<FD, FD::Context>>>,
 }
 
 impl<FD: FormToolData, C: VanityControlData<FD>> VanityControlBuilder<FD, C> {
@@ -200,9 +217,9 @@ impl<FD: FormToolData, C: VanityControlData<FD>> VanityControlBuilder<FD, C> {
     /// Validations for components that are not shown DO NOT run.
     pub fn show_when(
         mut self,
-        when: impl Fn(Signal<FD>, Arc<FD::Context>) -> bool + 'static,
+        when: impl Fn(Signal<FD>, Arc<FD::Context>) -> bool + Send + Sync + 'static,
     ) -> Self {
-        self.show_when = Some(Box::new(when));
+        self.show_when = Some(Arc::new(when));
         self
     }
 
@@ -327,7 +344,7 @@ impl<FD: FormToolData, C: ControlData<FD>, FDT> ControlBuilder<FD, C, FDT> {
     /// Validations for components that are not shown DO NOT run.
     pub fn show_when(
         mut self,
-        when: impl Fn(Signal<FD>, Arc<FD::Context>) -> bool + 'static,
+        when: impl Fn(Signal<FD>, Arc<FD::Context>) -> bool + Send + Sync + 'static,
     ) -> Self {
         self.show_when = Some(Arc::new(when));
         self

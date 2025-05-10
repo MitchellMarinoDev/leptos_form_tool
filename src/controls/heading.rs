@@ -25,7 +25,7 @@ impl<FD: FormToolData> VanityControlData<FD> for HeadingData {
     fn render_control<FS: FormStyle>(
         fs: &FS,
         _fd: leptos::prelude::RwSignal<FD>,
-        control: Arc<ControlRenderData<FS, Self>>,
+        control: ControlRenderData<FS, Self>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView {
         fs.heading(control, value_getter)

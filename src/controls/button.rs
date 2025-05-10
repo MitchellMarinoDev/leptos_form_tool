@@ -5,7 +5,7 @@ use leptos::prelude::{AnyView, RwSignal, Signal};
 use std::sync::Arc;
 use web_sys::MouseEvent;
 
-type ButtonAction<FD> = dyn Fn(MouseEvent, RwSignal<FD>) + 'static;
+type ButtonAction<FD> = dyn Fn(MouseEvent, RwSignal<FD>) + Send + Sync + 'static;
 
 /// Data used for the building button control.
 pub struct ButtonBuildData<FD: FormToolData> {
@@ -33,7 +33,7 @@ impl<FD: FormToolData> VanityControlData<FD> for ButtonBuildData<FD> {
     fn render_control<FS: FormStyle>(
         fs: &FS,
         fd: RwSignal<FD>,
-        control: Arc<ControlRenderData<FS, Self>>,
+        control: ControlRenderData<FS, Self>,
         value_getter: Option<Signal<String>>,
     ) -> AnyView {
         let action = control.data.action.as_ref().map(|a| {
@@ -46,7 +46,7 @@ impl<FD: FormToolData> VanityControlData<FD> for ButtonBuildData<FD> {
             styles: control.styles.clone(),
             data: ButtonData { action },
         };
-        let new_control = Arc::new(new_control);
+
         fs.button(new_control, value_getter)
     }
 }
@@ -81,7 +81,10 @@ impl<FD: FormToolData> VanityControlBuilder<FD, ButtonBuildData<FD>> {
     }
 
     /// Sets the action that is preformed when the button is clicked.
-    pub fn action(mut self, action: impl Fn(MouseEvent, RwSignal<FD>) + 'static) -> Self {
+    pub fn action(
+        mut self,
+        action: impl Fn(MouseEvent, RwSignal<FD>) + Send + Sync + 'static,
+    ) -> Self {
         self.data.action = Some(Arc::new(action));
         self
     }

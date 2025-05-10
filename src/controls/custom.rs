@@ -1,9 +1,8 @@
-use leptos::prelude::{AnyView, RwSignal};
-
 use super::{
     BuilderCxFn, BuilderFn, ControlBuilder, ControlData, VanityControlBuilder, VanityControlData,
 };
 use crate::{FormBuilder, FormToolData};
+use leptos::prelude::{AnyView, RwSignal};
 use std::sync::Arc;
 
 impl<FD: FormToolData> FormBuilder<FD> {

@@ -9,11 +9,7 @@ use crate::{
 };
 use leptos::{
     form::ActionForm,
-    prelude::{
-        create_effect, create_rw_signal, create_signal, Action, AnyView, Effect, GetUntracked,
-        IntoAny, RwSignal, ServerFnError, Set, Show, Signal, Track, Update, With, WithUntracked,
-        WriteSignal,
-    },
+    prelude::*,
     reactive::wrappers::write::{IntoSignalSetter, SignalSetter},
     server_fn::{client::Client, codec::PostUrl, request::ClientReq, ServerFn},
     *,
@@ -120,7 +116,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
 
         let cx = self.cx.clone();
         let render_fn = move |fs: Arc<FD::Style>, fd: RwSignal<FD>| {
-            let render_data = Arc::new(render_data);
+            let render_data = render_data;
             let value_getter =
                 getter.map(|getter| Signal::derive(move || fd.with(|fd| getter(fd))));
             let view = move || {
@@ -202,7 +198,6 @@ impl<FD: FormToolData> FormBuilder<FD> {
             show_when,
         } = control_data;
 
-        let render_data = Arc::new(render_data);
         let (validation_signal, validation_signal_set) = signal(ValidationState::Passed);
         let validation_fn_clone = validation_fn.clone();
         let initial_value = unparse_fn(fd.with_untracked(|fd| getter(fd)));
@@ -342,16 +337,18 @@ impl<FD: FormToolData> FormBuilder<FD> {
     /// Builds the direct send version of the form.
     pub(crate) fn build_form<ServFn, F: Fn(SubmitEvent, RwSignal<FD>) + 'static>(
         self,
-        action: Action<ServFn, Result<ServFn::Output, ServerFnError<ServFn::Error>>>,
+        action: ServerAction<ServFn>,
         on_submit: F,
         fd: FD,
         fs: FD::Style,
     ) -> Form<FD>
     where
-        ServFn: DeserializeOwned + ServerFn<InputEncoding = PostUrl> + Send + Sync + 'static,
+        ServFn:
+            DeserializeOwned + ServerFn<InputEncoding = PostUrl> + From<FD> + Clone + Send + Sync,
+        ServFn::Output: Send + Sync,
+        ServFn::Error: Send + Sync,
         <<ServFn::Client as Client<ServFn::Error>>::Request as ClientReq<ServFn::Error>>::FormData:
             From<FormData>,
-        ServFn: From<FD>,
     {
         let fd = RwSignal::new(fd);
         let fs = Arc::new(fs);
@@ -372,6 +369,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
                 return;
             }
             ev.prevent_default();
+
             for validation in validation_cbs.iter().flatten() {
                 if !validation() {
                     return;
@@ -380,7 +378,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
             on_submit(ev, fd);
 
             let server_fn = ServFn::from(fd.get_untracked());
-            action.dispatch(server_fn);
+            (*action).dispatch(server_fn);
         };
 
         let view = view! {
@@ -400,13 +398,16 @@ impl<FD: FormToolData> FormBuilder<FD> {
     /// Builds the action form version of the form.
     pub(crate) fn build_action_form<ServFn, F: Fn(SubmitEvent, RwSignal<FD>) + 'static>(
         self,
-        action: Action<ServFn, Result<ServFn::Output, ServerFnError<ServFn::Error>>>,
+        action: ServerAction<ServFn>,
         on_submit: F,
         fd: FD,
         fs: FD::Style,
     ) -> Form<FD>
     where
-        ServFn: DeserializeOwned + ServerFn<InputEncoding = PostUrl> + Send + Sync + 'static,
+        ServFn:
+            DeserializeOwned + ServerFn<InputEncoding = PostUrl> + From<FD> + Clone + Send + Sync,
+        ServFn::Output: Send + Sync,
+        ServFn::Error: Send + Sync,
         <<ServFn::Client as Client<ServFn::Error>>::Request as ClientReq<ServFn::Error>>::FormData:
             From<FormData>,
     {
@@ -459,7 +460,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
         fd: FD,
         fs: FD::Style,
     ) -> Form<FD> {
-        let fd = create_rw_signal(fd);
+        let fd = RwSignal::new(fd);
         let fs = Arc::new(fs);
 
         let (views, validation_cbs): (Vec<_>, Vec<_>) = self
@@ -469,7 +470,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
             .unzip();
 
         let elements = fs.form_frame(ControlRenderData {
-            data: views.into_view(),
+            data: views.into_any(),
             styles: self.styles,
         });
 
@@ -486,11 +487,13 @@ impl<FD: FormToolData> FormBuilder<FD> {
             on_submit(ev, fd);
         };
 
+        use leptos_router::components::Form;
         let view = view! {
             <Form action=url on:submit=on_submit>
                 {elements}
             </Form>
-        };
+        }
+        .into_any();
 
         Form {
             fd,
@@ -501,7 +504,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
 
     /// builds just the controls of the form.
     pub(crate) fn build_form_controls(self, fd: FD, fs: FD::Style) -> Form<FD> {
-        let fd = create_rw_signal(fd);
+        let fd = RwSignal::new(fd);
         let fs = Arc::new(fs);
 
         let (views, _validation_cbs): (Vec<_>, Vec<_>) = self
@@ -511,7 +514,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
             .unzip();
 
         let view = fs.form_frame(ControlRenderData {
-            data: views.into_view(),
+            data: views.into_any(),
             styles: self.styles,
         });
 

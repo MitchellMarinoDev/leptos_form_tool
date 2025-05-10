@@ -1,6 +1,6 @@
 [package]
 name = "leptos_form_tool"
-version = "0.2.3"
+version = "0.3.0"
 edition = "2021"
 authors = ["Mitchell Marino"]
 description = "A declarative way to create forms for leptos."
