@@ -165,7 +165,7 @@ pub struct ControlRenderData<FS: FormStyle + ?Sized, C: ?Sized> {
 impl<FS, C> Clone for ControlRenderData<FS, C>
 where
     FS: FormStyle + ?Sized,
-    C: ?Sized + Clone,
+    C: Clone,
 {
     fn clone(&self) -> Self {
         ControlRenderData {

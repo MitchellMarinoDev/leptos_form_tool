@@ -439,9 +439,9 @@ impl FormStyle for GridFormStyle {
                 type="number"
                 id=control.data.name.clone()
                 name=control.data.name.clone()
-                step=control.data.step.clone()
-                min=control.data.min.clone()
-                max=control.data.max.clone()
+                step=control.data.step
+                min=control.data.min
+                max=control.data.max
                 class="form_input"
                 class=("form_input_invalid", move || validation_state.get().is_err())
                 prop:value=move || value_getter.get()
@@ -473,8 +473,8 @@ impl FormStyle for GridFormStyle {
                 type="range"
                 id=control.data.name.clone()
                 name=control.data.name.clone()
-                min=control.data.min.clone()
-                max=control.data.max.clone()
+                min=control.data.min
+                max=control.data.max
                 class="form_input"
                 class=("form_input_invalid", move || validation_state.get().is_err())
                 prop:value=move || value_getter.get()

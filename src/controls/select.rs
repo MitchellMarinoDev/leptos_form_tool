@@ -44,7 +44,7 @@ impl<FD: FormToolData> Clone for SelectBuildData<FD> {
             name: self.name.clone(),
             label: self.label.clone(),
             dynamic_options: self.dynamic_options.clone(),
-            options: self.options.clone(),
+            options: self.options,
             blank_option: self.blank_option.clone(),
         }
     }
@@ -82,7 +82,7 @@ impl<FD: FormToolData> ControlData<FD> for SelectBuildData<FD> {
                 let d = d.clone();
                 Signal::derive(move || d(fd))
             })
-            .unwrap_or(control.data.options.clone());
+            .unwrap_or(control.data.options);
 
         let new_control = ControlRenderData {
             styles: control.styles.clone(),

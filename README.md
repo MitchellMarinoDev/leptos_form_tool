@@ -118,8 +118,9 @@ find one, please open an issue.
 
 | form_tool version | leptos version |
 |-------------------|----------------|
-| 0.2.0             | 0.6            |
-| 0.1.0             | 0.6            |
+| 0.3.*             | 0.7            |
+| 0.2.*             | 0.6            |
+| 0.1.*             | 0.6            |
 
 ## Contributing
 
