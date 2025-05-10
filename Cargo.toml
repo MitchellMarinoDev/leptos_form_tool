@@ -1,6 +1,6 @@
 [package]
 name = "leptos_form_tool"
-version = "0.3.0"
+version = "0.4.0"
 edition = "2021"
 authors = ["Mitchell Marino"]
 description = "A declarative way to create forms for leptos."
@@ -11,7 +11,7 @@ keywords = ["leptos", "web", "wasm", "html"]
 categories = ["web-programming"]
 
 [dependencies]
-leptos = "0.7"
-leptos_router = "0.7"
+leptos = "0.8"
+leptos_router = "0.8"
 serde = { version = "1.0", features = ["derive"] }
 web-sys = "0.3"

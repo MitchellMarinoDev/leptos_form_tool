@@ -11,7 +11,12 @@ use leptos::{
     form::ActionForm,
     prelude::*,
     reactive::wrappers::write::{IntoSignalSetter, SignalSetter},
-    server_fn::{client::Client, codec::PostUrl, request::ClientReq, ServerFn},
+    server_fn::{
+        client::Client,
+        codec::{Json, PostUrl},
+        request::ClientReq,
+        Http, ServerFn,
+    },
     *,
 };
 use serde::de::DeserializeOwned;
@@ -343,12 +348,18 @@ impl<FD: FormToolData> FormBuilder<FD> {
         fs: FD::Style,
     ) -> Form<FD>
     where
-        ServFn:
-            DeserializeOwned + ServerFn<InputEncoding = PostUrl> + From<FD> + Clone + Send + Sync,
-        ServFn::Output: Send + Sync,
-        ServFn::Error: Send + Sync,
+        ServFn: DeserializeOwned
+            + ServerFn<Protocol = Http<PostUrl, Json>>
+            + From<FD>
+            + Clone
+            + Send
+            + Sync
+            + 'static,
         <<ServFn::Client as Client<ServFn::Error>>::Request as ClientReq<ServFn::Error>>::FormData:
             From<FormData>,
+        ServFn::Output: Send + Sync + 'static,
+        ServFn::Error: Send + Sync + 'static,
+        <ServFn as ServerFn>::Client: Client<<ServFn as ServerFn>::Error>,
     {
         let fd = RwSignal::new(fd);
         let fs = Arc::new(fs);
@@ -370,11 +381,16 @@ impl<FD: FormToolData> FormBuilder<FD> {
             }
             ev.prevent_default();
 
+            let mut failed = false;
             for validation in validation_cbs.iter().flatten() {
                 if !validation() {
-                    return;
+                    failed = true;
                 }
             }
+            if failed {
+                return;
+            }
+
             on_submit(ev, fd);
 
             let server_fn = ServFn::from(fd.get_untracked());
@@ -382,7 +398,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
         };
 
         let view = view! {
-            <ActionForm action=action on:submit=on_submit>
+            <ActionForm action=action on:submit:capture=on_submit>
                 {elements}
             </ActionForm>
         }
@@ -404,12 +420,18 @@ impl<FD: FormToolData> FormBuilder<FD> {
         fs: FD::Style,
     ) -> Form<FD>
     where
-        ServFn:
-            DeserializeOwned + ServerFn<InputEncoding = PostUrl> + From<FD> + Clone + Send + Sync,
-        ServFn::Output: Send + Sync,
-        ServFn::Error: Send + Sync,
+        ServFn: DeserializeOwned
+            + ServerFn<Protocol = Http<PostUrl, Json>>
+            + From<FD>
+            + Clone
+            + Send
+            + Sync
+            + 'static,
         <<ServFn::Client as Client<ServFn::Error>>::Request as ClientReq<ServFn::Error>>::FormData:
             From<FormData>,
+        ServFn::Output: Send + Sync + 'static,
+        ServFn::Error: Send + Sync + 'static,
+        <ServFn as ServerFn>::Client: Client<<ServFn as ServerFn>::Error>,
     {
         let fd = RwSignal::new(fd);
         let fs = Arc::new(fs);
@@ -429,17 +451,23 @@ impl<FD: FormToolData> FormBuilder<FD> {
             if ev.default_prevented() {
                 return;
             }
+
+            let mut failed = false;
             for validation in validation_cbs.iter().flatten() {
                 if !validation() {
-                    ev.prevent_default();
-                    return;
+                    failed = true;
                 }
             }
+            if failed {
+                ev.prevent_default();
+                return;
+            }
+
             on_submit(ev, fd);
         };
 
         let view = view! {
-            <ActionForm action=action on:submit=on_submit>
+            <ActionForm action=action on:submit:capture=on_submit>
                 {elements}
             </ActionForm>
         }
@@ -475,21 +503,24 @@ impl<FD: FormToolData> FormBuilder<FD> {
         });
 
         let on_submit = move |ev: SubmitEvent| {
-            if ev.default_prevented() {
-                return;
-            }
+            let mut failed = false;
+
             for validation in validation_cbs.iter().flatten() {
                 if !validation() {
-                    ev.prevent_default();
-                    return;
+                    failed = true;
                 }
             }
+            if failed {
+                ev.prevent_default();
+                return;
+            }
+
             on_submit(ev, fd);
         };
 
         use leptos_router::components::Form;
         let view = view! {
-            <Form action=url on:submit=on_submit>
+            <Form action=url on:submit:capture=on_submit>
                 {elements}
             </Form>
         }
