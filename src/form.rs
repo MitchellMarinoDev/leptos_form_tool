@@ -3,7 +3,12 @@ use ev::SubmitEvent;
 use leptos::{
     prelude::{AnyView, GetUntracked, IntoAny, RwSignal},
     server::ServerAction,
-    server_fn::{client::Client, codec::PostUrl, request::ClientReq, ServerFn},
+    server_fn::{
+        client::Client,
+        codec::{Json, PostUrl},
+        request::ClientReq,
+        Http, ServerFn,
+    },
     *,
 };
 use serde::de::DeserializeOwned;
@@ -126,12 +131,18 @@ pub trait FormToolData: Clone + Send + Sync + 'static {
         context: Self::Context,
     ) -> Form<Self>
     where
-        ServFn:
-            DeserializeOwned + ServerFn<InputEncoding = PostUrl> + From<Self> + Clone + Send + Sync,
-        ServFn::Output: Send + Sync,
-        ServFn::Error: Send + Sync,
+        ServFn: DeserializeOwned
+            + ServerFn<Protocol = Http<PostUrl, Json>>
+            + From<Self>
+            + Clone
+            + Send
+            + Sync
+            + 'static,
         <<ServFn::Client as Client<ServFn::Error>>::Request as ClientReq<ServFn::Error>>::FormData:
             From<FormData>,
+        ServFn::Output: Send + Sync + 'static,
+        ServFn::Error: Send + Sync + 'static,
+        <ServFn as ServerFn>::Client: Client<<ServFn as ServerFn>::Error>,
     {
         let builder = FormBuilder::new(context);
         let builder = Self::build_form(builder);
@@ -156,12 +167,18 @@ pub trait FormToolData: Clone + Send + Sync + 'static {
         context: Self::Context,
     ) -> Form<Self>
     where
-        ServFn:
-            DeserializeOwned + ServerFn<InputEncoding = PostUrl> + From<Self> + Clone + Send + Sync,
-        ServFn::Output: Send + Sync,
-        ServFn::Error: Send + Sync,
+        ServFn: DeserializeOwned
+            + ServerFn<Protocol = Http<PostUrl, Json>>
+            + From<Self>
+            + Clone
+            + Send
+            + Sync
+            + 'static,
         <<ServFn::Client as Client<ServFn::Error>>::Request as ClientReq<ServFn::Error>>::FormData:
             From<FormData>,
+        ServFn::Output: Send + Sync + 'static,
+        ServFn::Error: Send + Sync + 'static,
+        <ServFn as ServerFn>::Client: Client<<ServFn as ServerFn>::Error>,
     {
         let builder = FormBuilder::new(context);
         let builder = Self::build_form(builder);
