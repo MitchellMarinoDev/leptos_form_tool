@@ -1,3 +1,11 @@
+//! A useable implementation of [`FormStyle`].
+//!
+//! You may use this as an example to customize your own form style.
+//!
+//! To use this style directly (if somehow it's perfect for your needs)
+//! make sure to include the .scss file in your leptos project (found in
+//! the root of the project on git).
+
 use super::FormStyle;
 use crate::controls::{
     button::ButtonData, checkbox::CheckboxData, heading::HeadingData, hidden::HiddenData,

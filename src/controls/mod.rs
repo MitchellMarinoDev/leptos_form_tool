@@ -1,9 +1,11 @@
+//! This module contains all the possible controls that you
+//! can use to build a form.
+
+use crate::{form::FormToolData, styles::FormStyle};
 use leptos::{
     prelude::{AnyView, RwSignal, Signal},
     reactive::wrappers::write::SignalSetter,
 };
-
-use crate::{form::FormToolData, styles::FormStyle};
 use std::{
     fmt::Display,
     marker::{Send, Sync},

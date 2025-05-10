@@ -17,31 +17,29 @@ This has several advantages:
 You might find yourself asking, but why not just use components?
 
 The biggest reason for creating leptos_form_tool is support for
-validating the fields. This validation logic can get rather complex, for
-instance, you likely want to perform validation on the client when the user 
-clicks submit to immediately give the user feedback about any invalid input.
-But you often also want to do the same validation on the server to protect
-against any requests that don't come from your client or for a user that
-doesn't have WASM enabled.
+validating the fields. This validation logic can get rather complex. You
+likely want to perform validation on the client side when the user clicks
+submit (to immediately give the user feedback). But you also want to do
+the same validation on the server for security reasons.
 
-Additionally, you might want to change the validation of one control based
-on the value of another. For example, you might want to make sure the "day"
+Additionally, you might want to change the validation of one field based
+on the value of another field. For example, you might want to make sure the "day"
 field is in a valid range, but that range depends on what the user selects in
 the "month" field. Or you might want to make sure the "confirm password" field
 matches the "password" field. leptos_form_tool makes this easy, as the
-validation function you provide operates on the entire form's data.
+validation function operates on the entire form's data.
 
-Sometimes you might not want to show some controls, and validation for those
+Sometimes you might want to hide some controls, and validation for those
 controls should only be done when they are visible.
 
-lepos_form_tool takes care of all this for you.
+leptos_form_tool takes care of all this for you.
 
 ## FormStyle
 
 To define how to render all the components a form might use, you define
 a type that implements the `FormStyle` trait. This trait has a method for each
 control that the form might need to render. To use this new style, you
-just need to change the `Style` associated trait of your form to your new type.
+just need to change the `Style` associated trait of your form to your new style.
 
 It's actually a little more complicated than that...
 
@@ -53,12 +51,15 @@ styling attributes are accessible to the `FormStyle` implementation when
 rendering that control.
 
 Therefore, swapping out styles also requires swapping out all the `.style()` calls.
+Still, a relatively small change. This also means the specific implementation of
+how a form gets rendered is decoupled from the form code, which is nice.
 
 ## Builders
 
-leptos_form_tool makes heavy use of the builder pattern. You will build the
-form, controls, and sometimes even validation functions by calling methods on
-a builder that constructs the object based on the values you give it.
+leptos_form_tool makes heavy use of the
+[builder pattern](https://en.wikipedia.org/wiki/Builder_pattern).
+You will build the form, controls, and sometimes even validation functions by calling
+methods on builders that construct the objects based on the values you give it.
 
 ## Context
 
@@ -94,28 +95,36 @@ the validation for that field does not run.
 ## Custom Components
 
 leptos_form_tool also supports custom components that can be defined in the
-user space. This keeps leptos_form_tool from putting
-limits on what you can do. There are `custom_*` methods on the form builder
-that allow you to add your component.
+user space. This keeps leptos_form_tool from putting limits on what you can do.
+There are `custom_*` methods on the form builder that allow you to add your
+own components.
 
 ## Getting Started
 
-To learn by example, see the 
+Excited and ready to get started?
+
+For a more in-depth guide, see [`getting_started.md`](/getting_started.md).
+
+To learn by example, see the
 [example project](https://github.com/MitchellMarinoDev/leptos_form_tool_example).
 
-To follow a Getting Started guide, see [`getting_started.md`].
+## Stability
+
+So far, this project is developed and used by me. I will continue to make updates
+as I find and fix bugs, but I am sure there are more in there somewhere. If you
+find one, please open an issue.
 
 ## Compatability
 
 | form_tool version | leptos version |
 |-------------------|----------------|
-| 0.1.0             | 0.6            |
 | 0.2.0             | 0.6            |
+| 0.1.0             | 0.6            |
 
 ## Contributing
 
-To contribute, fork the repo and make a PR. 
-If you find a bug, feel free to open an issue. 
+To contribute, fork the repo and make a PR.
+If you find a bug, feel free to open an issue.
 
-By contributing, you agree that your changes are 
-subject to the license found in [`/LICENSE`].
+By contributing, you agree that your changes are
+subject to the license found in [`/LICENSE`](/LICENSE).

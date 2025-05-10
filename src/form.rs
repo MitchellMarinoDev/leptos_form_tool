@@ -103,11 +103,11 @@ pub trait FormToolData: Clone + Send + Sync + 'static {
     /// Constructs a [`Form`] for this [`FormToolData`] type.
     ///
     /// This renders the form as a enhanced
-    /// [`ActionForm`](leptos_router::ActionForm) that sends the form data
+    /// [`ActionForm`](leptos::form::ActionForm) that sends the form data
     /// directly by calling the server function.
     ///
     /// By doing this, we avoid doing the
-    /// [`FromFormData`](leptos_router::FromFormData)
+    /// [`FromFormData`](leptos::form::FromFormData)
     /// conversion. However, to support
     /// [Progressive Enhancement](https://book.leptos.dev/progressive_enhancement/index.html),
     /// you should name the form elements to work with a plain ActionForm
@@ -140,8 +140,8 @@ pub trait FormToolData: Clone + Send + Sync + 'static {
 
     /// Constructs a [`Form`] for this [`FormToolData`] type.
     ///
-    /// This renders the form as a the leptos_router
-    /// [`ActionForm`](leptos_router::ActionForm)
+    /// This renders the form as a the
+    /// [`ActionForm`](leptos::form::ActionForm)
     /// component.
     ///
     /// For the other ways to construct a [`Form`], see:
@@ -171,7 +171,7 @@ pub trait FormToolData: Clone + Send + Sync + 'static {
     /// Constructs a [`Form`] for this [`FormToolData`] type.
     ///
     /// This renders the form as a the leptos_router
-    /// [`Form`](leptos_router::Form)
+    /// [`Form`](leptos_router::components::Form)
     /// component.
     ///
     /// For the other ways to construct a [`Form`], see:
