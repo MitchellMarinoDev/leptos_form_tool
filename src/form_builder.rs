@@ -205,7 +205,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
 
         let (validation_signal, validation_signal_set) = signal(ValidationState::Passed);
         let validation_fn_clone = validation_fn.clone();
-        let initial_value = unparse_fn(fd.with_untracked(|fd| getter(fd)));
+        let initial_value = unparse_fn(fd.with_untracked(|fd| untrack(|| getter(fd))));
         let (value_getter, value_setter) = signal(initial_value);
         Effect::new(move |_| {
             fd.track();
@@ -213,12 +213,10 @@ impl<FD: FormToolData> FormBuilder<FD> {
                 return;
             }
 
-            let fd = fd.get_untracked();
-
             // rerun validation if it is failing
             if validation_signal.get_untracked().is_validation_err() {
                 if let Some(ref validation_fn) = validation_fn_clone {
-                    let validation_result = validation_fn(&fd);
+                    let validation_result = fd.with_untracked(|fd| validation_fn(fd));
                     // if validation succeeds this time, resolve the validation error
                     if validation_result.is_ok() {
                         validation_signal_set.set(ValidationState::Passed);
@@ -226,7 +224,7 @@ impl<FD: FormToolData> FormBuilder<FD> {
                 }
             }
 
-            let value = unparse_fn(getter(&fd));
+            let value = unparse_fn(fd.with_untracked(|fd| getter(fd)));
             value_setter.set(value);
         });
         let value_getter = value_getter.into();
